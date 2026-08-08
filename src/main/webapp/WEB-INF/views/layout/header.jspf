@@ -1,0 +1,103 @@
+<%--
+  Common page opening: document head, navigation and flash messages.
+
+  Every dynamic value below goes through <c:out> or ${fn:escapeXml(...)}.
+  That is the XSS control named in the non-functional requirements - a donor
+  name containing markup is rendered as text, never as HTML.
+
+  Page directives and taglibs live in taglibs.jspf, which every view includes
+  before this one - see the note there for why the ordering matters.
+--%>
+<c:set var="ctx" value="${pageContext.request.contextPath}" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title><c:out value="${pageTitle}" default="Blood Donation Card Management System" /> &middot; BDCMS</title>
+  <link rel="stylesheet" href="${ctx}/assets/vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="${ctx}/assets/css/bdcms.css">
+  <link rel="icon" href="${ctx}/assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body class="bdcms">
+
+<c:if test="${not empty currentUser}">
+  <nav class="navbar navbar-expand-lg navbar-dark bdcms-navbar sticky-top">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="${ctx}/app/dashboard">
+        <span class="bdcms-drop" aria-hidden="true"></span>
+        <span>BDCMS</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
+              aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link ${nav eq 'dashboard' ? 'active' : ''}" href="${ctx}/app/dashboard">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link ${nav eq 'verify' ? 'active' : ''}" href="${ctx}/app/verify">Verify &amp; Donate</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link ${nav eq 'donors' ? 'active' : ''}" href="${ctx}/app/donors">Donors</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link ${nav eq 'register' ? 'active' : ''}" href="${ctx}/app/donors/register">Register Donor</a>
+          </li>
+          <c:if test="${currentUser.admin}">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle ${nav eq 'admin' ? 'active' : ''}" href="#"
+                 role="button" data-bs-toggle="dropdown" aria-expanded="false">Administration</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="${ctx}/app/reports">Reports</a></li>
+                <li><a class="dropdown-item" href="${ctx}/app/admin/verification-log">Verification Audit Log</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="${ctx}/app/admin/users">Staff Accounts</a></li>
+                <li><a class="dropdown-item" href="${ctx}/app/admin/settings">System Settings</a></li>
+              </ul>
+            </li>
+          </c:if>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <span class="navbar-text small">
+            <c:out value="${currentUser.fullName}" />
+            <span class="badge ${currentUser.admin ? 'text-bg-light' : 'text-bg-secondary'} ms-1">
+              <c:out value="${currentUser.role}" />
+            </span>
+          </span>
+          <form method="post" action="${ctx}/logout" class="m-0">
+            <input type="hidden" name="_csrf" value="${csrfToken}">
+            <button type="submit" class="btn btn-sm btn-outline-light">Sign out</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </nav>
+</c:if>
+
+<main class="container-fluid py-4 px-lg-4">
+
+  <c:if test="${not empty flashSuccess}">
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <c:out value="${flashSuccess}" />
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </c:if>
+  <c:if test="${not empty flashError}">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <c:out value="${flashError}" />
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </c:if>
+  <c:if test="${not empty errorMessage}">
+    <div class="alert alert-danger" role="alert"><c:out value="${errorMessage}" /></div>
+  </c:if>
+  <c:if test="${not empty infoMessage}">
+    <div class="alert alert-info" role="alert"><c:out value="${infoMessage}" /></div>
+  </c:if>

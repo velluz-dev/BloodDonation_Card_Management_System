@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.bdcms</groupId>
+  <artifactId>bdcms</artifactId>
+  <version>1.0.0</version>
+  <packaging>war</packaging>
+
+  <name>Blood Donation Card Management System</name>
+  <description>Centralised donor card, identity verification and eligibility platform (Jakarta EE)</description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jakartaee.version>10.0.0</jakartaee.version>
+    <jstl.version>3.0.1</jstl.version>
+    <mysql.version>8.4.0</mysql.version>
+    <hikari.version>5.1.0</hikari.version>
+    <zxing.version>3.5.3</zxing.version>
+    <openpdf.version>1.3.30</openpdf.version>
+    <junit.version>5.10.2</junit.version>
+    <tomcat.version>10.1.30</tomcat.version>
+    <!-- Port the embedded Tomcat listens on. 8080 is often already taken on a
+         development machine, so it is a property you can override:
+             mvnw.cmd cargo:run -Dcargo.port=9090 -->
+    <cargo.port>8081</cargo.port>
+  </properties>
+
+  <dependencies>
+    <!-- Servlet / JSP / EL API: provided by Tomcat 10.1 (jakarta.* namespace) -->
+    <dependency>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-web-api</artifactId>
+      <version>${jakartaee.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- JSTL 3.0 (jakarta.tags.* URIs) - must be bundled in the WAR -->
+    <dependency>
+      <groupId>jakarta.servlet.jsp.jstl</groupId>
+      <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+      <version>3.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.web</groupId>
+      <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+      <version>${jstl.version}</version>
+    </dependency>
+
+    <!-- Data tier -->
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <version>${mysql.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>${hikari.version}</version>
+    </dependency>
+
+    <!-- Password hashing (FR-1 / NFR Security) -->
+    <dependency>
+      <groupId>org.mindrot</groupId>
+      <artifactId>jbcrypt</artifactId>
+      <version>0.4</version>
+    </dependency>
+
+    <!-- QR code generation for donor cards (FR-3) -->
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>core</artifactId>
+      <version>${zxing.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>javase</artifactId>
+      <version>${zxing.version}</version>
+    </dependency>
+
+    <!-- PDF export for cards and reports (FR-3 / FR-7) -->
+    <dependency>
+      <groupId>com.github.librepdf</groupId>
+      <artifactId>openpdf</artifactId>
+      <version>${openpdf.version}</version>
+    </dependency>
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.13</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>2.0.13</version>
+    </dependency>
+
+    <!-- Tests -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.12.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>bdcms</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.4.0</version>
+        <configuration>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <argLine>-Djava.awt.headless=true</argLine>
+        </configuration>
+      </plugin>
+
+      <!-- Downloads and runs Tomcat 10.1 - no manual server install required.
+           Usage: mvnw.cmd clean package cargo:run -->
+      <plugin>
+        <groupId>org.codehaus.cargo</groupId>
+        <artifactId>cargo-maven3-plugin</artifactId>
+        <version>1.10.15</version>
+        <configuration>
+          <container>
+            <containerId>tomcat10x</containerId>
+            <artifactInstaller>
+              <groupId>org.apache.tomcat</groupId>
+              <artifactId>tomcat</artifactId>
+              <version>${tomcat.version}</version>
+            </artifactInstaller>
+          </container>
+          <configuration>
+            <properties>
+              <!-- Override with -Dcargo.port=NNNN if this one is taken. -->
+              <cargo.servlet.port>${cargo.port}</cargo.servlet.port>
+              <cargo.jvmargs>-Djava.awt.headless=true</cargo.jvmargs>
+            </properties>
+          </configuration>
+          <deployables>
+            <deployable>
+              <groupId>com.bdcms</groupId>
+              <artifactId>bdcms</artifactId>
+              <type>war</type>
+              <properties>
+                <context>bdcms</context>
+              </properties>
+            </deployable>
+          </deployables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!--
+      JSP validation.
+
+      JSPs are normally translated by the container at first request, which
+      means a broken taglib URI or a stray scriptlet is not discovered until
+      someone opens the page. This profile runs Jasper - the same translator
+      Tomcat uses - over every JSP at build time, so those faults surface as
+      build failures instead.
+
+      It also proves the <scripting-invalid> rule in web.xml: a page containing
+      Java code fails here rather than shipping.
+
+          mvnw.cmd -P jsp-check verify
+    -->
+    <profile>
+      <id>jsp-check</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>tomcat-jasper</artifactId>
+          <version>${tomcat.version}</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>tomcat-jasper-el</artifactId>
+          <version>${tomcat.version}</version>
+          <scope>test</scope>
+        </dependency>
+        <!-- Jasper's JspC entry point extends an Ant Task, so Ant must be present. -->
+        <dependency>
+          <groupId>org.apache.ant</groupId>
+          <artifactId>ant</artifactId>
+          <version>1.10.14</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.2.0</version>
+            <executions>
+              <execution>
+                <id>translate-jsps</id>
+                <phase>verify</phase>
+                <goals><goal>exec</goal></goals>
+                <configuration>
+                  <executable>java</executable>
+                  <classpathScope>test</classpathScope>
+                  <arguments>
+                    <argument>-classpath</argument>
+                    <classpath/>
+                    <argument>org.apache.jasper.JspC</argument>
+                    <argument>-webapp</argument>
+                    <argument>${project.basedir}/src/main/webapp</argument>
+                    <argument>-d</argument>
+                    <argument>${project.build.directory}/jspc</argument>
+                    <argument>-compile</argument>
+                    <argument>-failFast</argument>
+                    <!-- Exit non-zero on a translation error, so a broken JSP
+                         fails the build instead of only printing a stack trace. -->
+                    <argument>-die1</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

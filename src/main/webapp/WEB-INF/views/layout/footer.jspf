@@ -1,0 +1,13 @@
+﻿</main>
+
+<footer class="bdcms-footer">
+  <div class="container-fluid px-lg-4 py-3 d-flex flex-wrap justify-content-between gap-2">
+    <span>Blood Donation Card Management System &middot; Section D, Group 3</span>
+    <span class="text-muted">Centralised donor records &middot; verified identity &middot; safe donation intervals</span>
+  </div>
+</footer>
+
+<script src="${ctx}/assets/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="${ctx}/assets/js/bdcms.js"></script>
+</body>
+</html>

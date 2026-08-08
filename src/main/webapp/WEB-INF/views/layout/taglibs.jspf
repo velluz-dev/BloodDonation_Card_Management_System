@@ -1,0 +1,17 @@
+﻿<%--
+  Page directives and tag libraries, included as the FIRST line of every view.
+
+  This has to come before anything else because a page sets its own title with
+  <c:set> before including the header, and JSP requires a prefix to be declared
+  by a directive before any action uses it. Keeping the directives here - rather
+  than in header.jspf, which is included afterwards - is what makes that
+  ordering work, and means the URIs are written down once.
+
+  Note the URIs: JSTL 3.0 uses the short "jakarta.tags.*" form. The old
+  "http://java.sun.com/jsp/jstl/core" URIs belong to the javax namespace and do
+  not resolve on Tomcat 10.
+--%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
