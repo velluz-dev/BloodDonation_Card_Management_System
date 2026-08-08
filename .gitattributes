@@ -1,0 +1,33 @@
+# Normalise line endings so the repository is consistent regardless of the
+# platform a team member works on. Text files are stored with LF in git and
+# checked out with the platform's native ending.
+* text=auto
+
+# Shell scripts must keep LF even on Windows, or they will not run.
+mvnw           text eol=lf
+*.sh           text eol=lf
+
+# Windows batch files need CRLF.
+mvnw.cmd       text eol=crlf
+*.bat          text eol=crlf
+
+# Source and config, explicitly text.
+*.java         text
+*.jsp          text
+*.jspf         text
+*.xml          text
+*.properties   text
+*.sql          text
+*.md           text
+*.css          text
+*.js           text
+*.svg          text
+
+# Binary: never touch these.
+*.png          binary
+*.jpg          binary
+*.jpeg         binary
+*.gif          binary
+*.pdf          binary
+*.jar          binary
+*.war          binary

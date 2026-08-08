@@ -1,0 +1,276 @@
+/* ---------------------------------------------------------------------------
+   Blood Donation Card Management System - application styles.
+
+   Bootstrap 5.3 supplies the grid, forms and components; this file adds only
+   what is specific to this system: the blood-red identity, the verification
+   photograph (which the usability requirement asks to be prominent), and the
+   printable card preview.
+   --------------------------------------------------------------------------- */
+
+:root {
+    --bdcms-red: #a11d21;
+    --bdcms-red-dark: #7d1619;
+    --bdcms-ink: #212529;
+    --bdcms-line: #dee2e6;
+}
+
+body.bdcms {
+    background-color: #f6f7f9;
+    color: var(--bdcms-ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+body.bdcms > main {
+    flex: 1 0 auto;
+}
+
+/* ---- navigation ---------------------------------------------------------- */
+
+.bdcms-navbar {
+    background-color: var(--bdcms-red);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
+}
+
+.bdcms-navbar .nav-link.active {
+    font-weight: 600;
+    border-bottom: 2px solid rgba(255, 255, 255, .85);
+}
+
+/* The blood-drop mark used in the navbar and on the login page. */
+.bdcms-drop {
+    width: 18px;
+    height: 22px;
+    background: #fff;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    transform: rotate(45deg) scale(.85);
+    box-shadow: inset -2px -2px 0 rgba(0, 0, 0, .08);
+}
+
+.bdcms-drop-lg {
+    width: 34px;
+    height: 42px;
+    background: var(--bdcms-red);
+}
+
+.bdcms-footer {
+    border-top: 1px solid var(--bdcms-line);
+    background: #fff;
+    font-size: .85rem;
+    color: #6c757d;
+}
+
+/* ---- login --------------------------------------------------------------- */
+
+.bdcms-login-row {
+    min-height: 78vh;
+}
+
+/* ---- dashboard statistics ------------------------------------------------ */
+
+.bdcms-stat {
+    border-left: 4px solid var(--bdcms-red);
+}
+
+.bdcms-stat-warn {
+    border-left-color: #fd7e14;
+}
+
+.bdcms-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.bdcms-stat-label {
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #6c757d;
+}
+
+/* ---- donor photographs --------------------------------------------------- */
+
+/*
+   The verification photograph is deliberately large. Staff have seconds to
+   compare a face against a screen, and a thumbnail makes that comparison
+   unreliable - which would undermine the whole point of the system.
+*/
+.bdcms-verify-photo {
+    width: 100%;
+    max-width: 260px;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border: 3px solid var(--bdcms-red);
+    border-radius: 6px;
+    background: #e9ecef;
+}
+
+.bdcms-thumb {
+    width: 96px;
+    height: 120px;
+    object-fit: cover;
+    border: 2px solid var(--bdcms-line);
+    border-radius: 4px;
+    background: #e9ecef;
+}
+
+.bdcms-avatar {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid var(--bdcms-line);
+    background: #e9ecef;
+}
+
+/* ---- verification -------------------------------------------------------- */
+
+.bdcms-masked-id {
+    background: #fff5f5;
+    border: 1px dashed var(--bdcms-red);
+    border-radius: 6px;
+    padding: .75rem;
+}
+
+.bdcms-masked-id .font-monospace {
+    letter-spacing: .12em;
+}
+
+/* The confirmation is the moment of accountability; it should not be easy to
+   tick without noticing. */
+.bdcms-confirm-box {
+    background: #fff8e1;
+    border: 1px solid #ffe08a;
+    border-radius: 6px;
+    padding: .9rem 1rem .9rem 2.4rem;
+}
+
+.bdcms-pin {
+    letter-spacing: .6em;
+    font-size: 1.3rem;
+    text-align: center;
+    max-width: 10rem;
+}
+
+/* ---- printable card preview ---------------------------------------------- */
+
+/* Sized to the ID-1 card standard (85.6 x 54 mm) so the preview matches the
+   physical object the PDF produces. */
+.bdcms-card-preview {
+    width: 85.6mm;
+    min-height: 54mm;
+    background: #fff;
+    border: 1px solid var(--bdcms-line);
+    border-radius: 3mm;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .14);
+    padding: 3mm;
+    display: flex;
+    flex-direction: column;
+    font-size: 8pt;
+}
+
+.bdcms-card-header {
+    text-align: center;
+    border-bottom: .6mm solid var(--bdcms-red);
+    padding-bottom: 1mm;
+}
+
+.bdcms-card-title {
+    color: var(--bdcms-red);
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: .04em;
+}
+
+.bdcms-card-centre {
+    font-size: 6pt;
+    color: #6c757d;
+}
+
+.bdcms-card-body {
+    display: flex;
+    gap: 2mm;
+    padding-top: 2mm;
+    flex: 1;
+}
+
+.bdcms-card-photo {
+    width: 16mm;
+    height: 20mm;
+    object-fit: cover;
+    border: .3mm solid var(--bdcms-line);
+}
+
+.bdcms-card-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.bdcms-card-label {
+    font-size: 5.5pt;
+    text-transform: uppercase;
+    color: #868e96;
+    letter-spacing: .04em;
+}
+
+.bdcms-card-value {
+    font-weight: 700;
+    font-size: 8pt;
+    margin-bottom: 1mm;
+    overflow-wrap: anywhere;
+}
+
+.bdcms-card-group {
+    font-weight: 700;
+    font-size: 15pt;
+    color: var(--bdcms-red);
+    line-height: 1.1;
+    margin-bottom: 1mm;
+}
+
+.bdcms-card-no {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-weight: 700;
+    font-size: 8pt;
+}
+
+.bdcms-card-qr {
+    text-align: center;
+    width: 18mm;
+}
+
+.bdcms-card-qr img {
+    width: 17mm;
+    height: 17mm;
+}
+
+.bdcms-card-footer {
+    border-top: .2mm solid var(--bdcms-line);
+    margin-top: 1.5mm;
+    padding-top: 1mm;
+    font-size: 5pt;
+    color: #868e96;
+    text-align: center;
+}
+
+/* Printing the preview page should produce the card and nothing else. */
+@media print {
+    .bdcms-navbar,
+    .bdcms-footer,
+    .btn,
+    .breadcrumb,
+    .alert {
+        display: none !important;
+    }
+
+    body.bdcms {
+        background: #fff;
+    }
+
+    .bdcms-card-preview {
+        box-shadow: none;
+        border: .2mm solid #999;
+    }
+}

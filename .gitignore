@@ -1,0 +1,31 @@
+# Build output
+target/
+
+# Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Maven wrapper: the scripts and properties ARE committed (that is the point of
+# a wrapper), but never the downloaded distribution.
+.mvn/wrapper/*.jar
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Uploaded donor photographs, if the upload directory is ever pointed inside
+# the project. These are personal data and must never reach source control.
+uploads/
+bdcms-uploads/
+
+# Local credential overrides
+src/main/resources/db.local.properties
