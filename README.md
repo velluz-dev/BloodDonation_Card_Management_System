@@ -4,6 +4,8 @@ A centralised web-based donor card, identity verification and eligibility platfo
 
 **Section D · Group 3**
 
+> 👥 **New to the project? Start with [TEAM-GUIDE.md](TEAM-GUIDE.md)** — what every folder is for, how to set it up on your machine, and which folder you should be editing.
+
 ---
 
 ## The problem
@@ -109,6 +111,7 @@ That live run caught two defects the build could not: Jakarta EL 5.0 cannot read
 
 | Document | Contents |
 |---|---|
+| [TEAM-GUIDE.md](TEAM-GUIDE.md) | **For teammates** — folder structure, machine setup, who edits what, git workflow |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Feature map, dependency graph, request trace, the transaction, design decisions |
 | [SETUP.md](SETUP.md) | Install, build, run, sign in, guided walkthrough, troubleshooting |
 | [docs/er-diagram.md](docs/er-diagram.md) | Schema, constraints, indexes and the invariants enforced in code |
