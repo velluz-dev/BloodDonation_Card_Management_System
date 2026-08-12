@@ -1,7 +1,11 @@
 package com.bdcms.feature.donation;
 
+import com.bdcms.feature.auth.AuthService;
+import com.bdcms.feature.auth.User;
 import com.bdcms.feature.card.CardService;
 import com.bdcms.feature.card.DonorCard;
+import com.bdcms.feature.donor.Donor;
+import com.bdcms.feature.donor.DonorService;
 import com.bdcms.feature.eligibility.EligibilityResult;
 import com.bdcms.feature.eligibility.EligibilityService;
 import com.bdcms.feature.verification.VerificationResult;
@@ -9,64 +13,50 @@ import com.bdcms.feature.verification.VerificationService;
 import com.bdcms.shared.db.Tx;
 
 import java.sql.Connection;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Recording a donation (FR-6) - the one place where four features meet.
- *
- * <p>This service sits at the top of the dependency graph. It composes the card,
- * verification and eligibility features through their <em>services</em>; it
- * never reaches into another feature's DAO, and no other feature imports it.
- *
- * <p><strong>The transaction.</strong> The reliability requirement states that
- * verification, the eligibility check and the insertion must all succeed or all
- * roll back. That is achievable only because every DAO method in the system
- * takes a {@link Connection}: {@link Tx#inTransaction} opens one connection,
- * and card lookup, verification logging, the last-donation query and the insert
- * all run on it. A failure anywhere unwinds the lot.
- *
- * <p><strong>Why a refusal is returned and never thrown.</strong> A failed
- * verification must survive, or the audit trail would record only the attempts
- * that went well - exactly backwards. That is achieved by the return type
- * rather than by a second transaction: a refusal comes back as a
- * {@link DonationOutcome}, so the block returns normally, the
- * {@code verification_log} row commits, and the donation is simply never
- * inserted. Throwing here would roll the audit row back with everything else.
- *
- * <p>A genuine fault - a dropped connection, a constraint violation - still
- * throws, and then the whole unit unwinds including the log row. That is also
- * correct: in that case nothing happened at all.
  */
 public class DonationService {
 
-    private final DonationDao donationDao;
+    private static final int MIN_VOLUME_ML = 100;
+    private static final int MAX_VOLUME_ML = 700;
+
+    private final DonationRepository donationRepository;
     private final CardService cardService;
     private final VerificationService verificationService;
     private final EligibilityService eligibilityService;
+    private final DonorService donorService;
+    private final AuthService authService;
+    private final Clock clock;
 
     public DonationService() {
-        this(new DonationDao(), new CardService(), new VerificationService(), new EligibilityService());
+        this(new DonationRepository(), new CardService(), new VerificationService(),
+                new EligibilityService(), new DonorService(), new AuthService(), Clock.systemDefaultZone());
     }
 
-    public DonationService(DonationDao donationDao, CardService cardService,
+    public DonationService(DonationRepository donationRepository, CardService cardService,
                            VerificationService verificationService,
-                           EligibilityService eligibilityService) {
-        this.donationDao = donationDao;
+                           EligibilityService eligibilityService,
+                           DonorService donorService,
+                           AuthService authService,
+                           Clock clock) {
+        this.donationRepository = donationRepository;
         this.cardService = cardService;
         this.verificationService = verificationService;
         this.eligibilityService = eligibilityService;
+        this.donorService = donorService;
+        this.authService = authService;
+        this.clock = clock;
     }
 
     /**
      * Verifies the donor, checks eligibility and records the donation - all or
      * nothing.
-     *
-     * @param cardNo         card number scanned or typed at the counter
-     * @param staffId        the signed-in staff member, recorded as accountable
-     * @param staffConfirmed whether staff explicitly confirmed photo and masked ID
-     * @param pin            the donor's four-digit PIN, when they set one
      */
     public DonationOutcome record(String cardNo, long staffId, boolean staffConfirmed,
                                   String pin, String centre, int volumeMl, LocalDate donationDate) {
@@ -77,21 +67,14 @@ public class DonationService {
         if (centre == null || centre.isBlank()) {
             return DonationOutcome.invalid("The donation centre is required.");
         }
-        if (volumeMl < 100 || volumeMl > 700) {
-            return DonationOutcome.invalid("Volume must be between 100 ml and 700 ml.");
+        if (volumeMl < MIN_VOLUME_ML || volumeMl > MAX_VOLUME_ML) {
+            return DonationOutcome.invalid("Volume must be between " + MIN_VOLUME_ML + " ml and " + MAX_VOLUME_ML + " ml.");
         }
-        LocalDate date = donationDate == null ? LocalDate.now() : donationDate;
-        if (date.isAfter(LocalDate.now())) {
+        LocalDate date = donationDate == null ? LocalDate.now(clock) : donationDate;
+        if (date.isAfter(LocalDate.now(clock))) {
             return DonationOutcome.invalid("A donation cannot be dated in the future.");
         }
 
-        // A refused attempt is returned, never thrown. That distinction is what
-        // keeps the audit trail intact: returning normally commits the
-        // verification_log row written inside the block, while the donation
-        // simply never gets inserted. Only a genuine fault - a dropped
-        // connection, a constraint violation - throws, and then the whole unit
-        // including the log row unwinds, which is correct because nothing
-        // happened at all.
         return Tx.inTransaction(conn ->
                 recordInTransaction(conn, cardNo, staffId, staffConfirmed, pin, centre, volumeMl, date));
     }
@@ -101,9 +84,6 @@ public class DonationService {
                                                 boolean staffConfirmed, String pin, String centre,
                                                 int volumeMl, LocalDate date) {
 
-        // 1. Identity verification. This resolves the card, checks its status,
-        //    the staff confirmation and the PIN, and writes the audit row for
-        //    whatever it finds - all on this connection.
         VerificationResult verification =
                 verificationService.verify(conn, cardNo, staffId, staffConfirmed, pin);
         if (!verification.isSuccess()) {
@@ -119,7 +99,6 @@ public class DonationService {
                     });
         }
 
-        // 2. Verification succeeded, so the card is present and usable.
         Optional<DonorCard> card = cardService.findByCardNo(conn, cardNo);
         if (card.isEmpty()) {
             return DonationOutcome.verificationFailed(VerificationResult.CARD_NOT_FOUND,
@@ -127,17 +106,12 @@ public class DonationService {
         }
         long donorId = card.get().getDonorId();
 
-        // 3. Eligibility, computed from the history read on this same connection.
-        LocalDate lastDonation = donationDao.findLastDonationDate(conn, donorId).orElse(null);
+        LocalDate lastDonation = donationRepository.findLastDonationDate(conn, donorId).orElse(null);
         EligibilityResult eligibility = eligibilityService.evaluate(conn, lastDonation);
         if (!eligibility.isEligible()) {
-            // Identity was genuinely verified, so that audit row is correct and
-            // must persist - but nothing may be inserted. Returning normally
-            // commits the verification row without the donation.
             return DonationOutcome.notEligible(eligibility);
         }
 
-        // 4. Append the donation.
         Donation donation = new Donation();
         donation.setDonorId(donorId);
         donation.setCardId(card.get().getCardId());
@@ -145,25 +119,71 @@ public class DonationService {
         donation.setCentre(centre.trim());
         donation.setVolumeMl(volumeMl);
         donation.setVerifiedBy(staffId);
-        donationDao.insert(conn, donation);
+        donationRepository.insert(conn, donation);
 
         donation.setCardNo(card.get().getCardNo());
         return DonationOutcome.recorded(donation, eligibility);
     }
 
-    // ---- history and dashboard queries -------------------------------------
+    public Donation recordDonation(long donorId, long cardId, String centre,
+                                   int volumeMl, long staffUserId) {
+        return Tx.inTransaction(conn -> recordDonation(conn, donorId, cardId, centre, volumeMl, staffUserId));
+    }
+
+    Donation recordDonation(Connection conn, long donorId, long cardId, String centre,
+                            int volumeMl, long staffUserId) {
+        Donor donor = donorService.findById(conn, donorId)
+                .orElseThrow(() -> new IllegalArgumentException("Donor not found."));
+        DonorCard card = cardService.findById(conn, cardId)
+                .orElseThrow(() -> new IllegalArgumentException("Card not found."));
+        if (card.getDonorId() != donor.getDonorId()) {
+            throw new IllegalArgumentException("Card does not belong to donor.");
+        }
+        if (!card.isUsable()) {
+            throw new IllegalArgumentException("Card is not active.");
+        }
+        if (centre == null || centre.isBlank()) {
+            throw new IllegalArgumentException("Donation centre is required.");
+        }
+        if (volumeMl < MIN_VOLUME_ML || volumeMl > MAX_VOLUME_ML) {
+            throw new IllegalArgumentException("Donation volume must be between "
+                    + MIN_VOLUME_ML + " ml and " + MAX_VOLUME_ML + " ml.");
+        }
+        User staff = authService.findById(conn, staffUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Staff user not found."));
+        if (!staff.isActive()) {
+            throw new IllegalArgumentException("Staff user is not authorized.");
+        }
+
+        LocalDate lastDonation = donationRepository.findLastDonationDate(conn, donorId).orElse(null);
+        EligibilityResult eligibility = eligibilityService.evaluate(conn, lastDonation);
+        if (!eligibility.isEligible()) {
+            throw new DonorNotEligibleException(eligibility.daysRemaining(), eligibility.nextPermittedDate(),
+                    eligibility.getExplanation());
+        }
+
+        Donation donation = new Donation();
+        donation.setDonorId(donorId);
+        donation.setCardId(cardId);
+        donation.setDonationDate(LocalDate.now(clock));
+        donation.setCentre(centre.trim());
+        donation.setVolumeMl(volumeMl);
+        donation.setVerifiedBy(staffUserId);
+        donationRepository.insert(conn, donation);
+        return donation;
+    }
 
     /** A donor's complete chronological history (FR-6). */
     public List<Donation> historyForDonor(long donorId) {
-        return Tx.read(conn -> donationDao.findByDonor(conn, donorId));
+        return Tx.read(conn -> donationRepository.findByDonor(conn, donorId));
     }
 
     public List<Donation> recent(int limit) {
-        return Tx.read(conn -> donationDao.findRecent(conn, limit));
+        return Tx.read(conn -> donationRepository.findRecent(conn, limit));
     }
 
     public int countSince(LocalDate from) {
-        return Tx.read(conn -> donationDao.countSince(conn, from));
+        return Tx.read(conn -> donationRepository.countSince(conn, from));
     }
 
     /**
@@ -172,7 +192,7 @@ public class DonationService {
      */
     public EligibilityResult eligibilityFor(long donorId) {
         return Tx.read(conn -> {
-            LocalDate last = donationDao.findLastDonationDate(conn, donorId).orElse(null);
+            LocalDate last = donationRepository.findLastDonationDate(conn, donorId).orElse(null);
             return eligibilityService.evaluate(conn, last);
         });
     }
