@@ -1,197 +1,194 @@
 package com.bdcms.feature.eligibility;
 
+import com.bdcms.feature.donation.DonationDao;
+import com.bdcms.feature.donor.Donor;
+import com.bdcms.feature.donor.DonorDao;
+import com.bdcms.shared.config.SettingsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
+import java.sql.Connection;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * Tests for the donation waiting-period rule (FR-5).
- *
- * <p>These run without a database, a container or a clock: the rule is a pure
- * function of (last donation, interval, today), so every boundary can be stated
- * directly. That is the payoff of keeping the eligibility feature free of any
- * dependency on the donation feature's tables.
- */
 class EligibilityServiceTest {
 
-    private static final LocalDate TODAY = LocalDate.of(2026, 8, 7);
-    private static final int INTERVAL = 84;
+    private static final LocalDate FIXED_DATE = LocalDate.of(2026, 8, 11);
+    private static final long DONOR_ID = 42L;
 
-    private final EligibilityService service = new EligibilityService();
+    private SettingsService settingsService;
+    private DonorDao donorDao;
+    private DonationDao donationDao;
+    private EligibilityService service;
 
-    @Nested
-    @DisplayName("First-time donors")
-    class FirstDonation {
-
-        @Test
-        @DisplayName("a donor with no recorded donation is eligible")
-        void noHistoryIsEligible() {
-            EligibilityResult result = service.evaluate(null, INTERVAL, TODAY);
-
-            assertTrue(result.isEligible());
-            assertTrue(result.isFirstDonation());
-            assertNull(result.lastDonationDate());
-            assertEquals(0, result.getDaysRemaining());
-        }
-
-        @Test
-        @DisplayName("the explanation says no waiting period applies")
-        void explainsWhy() {
-            EligibilityResult result = service.evaluate(null, INTERVAL, TODAY);
-
-            assertTrue(result.getExplanation().contains("First recorded donation"));
-        }
-    }
-
-    @Nested
-    @DisplayName("The interval boundary")
-    class Boundary {
-
-        @Test
-        @DisplayName("exactly 84 days since the last donation is ELIGIBLE")
-        void exactlyAtIntervalIsEligible() {
-            LocalDate lastDonation = TODAY.minusDays(INTERVAL);
-
-            EligibilityResult result = service.evaluate(lastDonation, INTERVAL, TODAY);
-
-            assertEquals(EligibilityStatus.ELIGIBLE, result.status());
-            assertEquals(INTERVAL, result.daysSinceLast());
-        }
-
-        @Test
-        @DisplayName("83 days - one day short - is NOT ELIGIBLE")
-        void oneDayShortIsNotEligible() {
-            LocalDate lastDonation = TODAY.minusDays(INTERVAL - 1);
-
-            EligibilityResult result = service.evaluate(lastDonation, INTERVAL, TODAY);
-
-            assertEquals(EligibilityStatus.NOT_ELIGIBLE, result.status());
-            assertEquals(83, result.daysSinceLast());
-        }
-
-        @Test
-        @DisplayName("85 days is comfortably eligible")
-        void oneDayPastIsEligible() {
-            EligibilityResult result = service.evaluate(TODAY.minusDays(INTERVAL + 1), INTERVAL, TODAY);
-
-            assertTrue(result.isEligible());
-        }
-
-        @Test
-        @DisplayName("donating today makes the donor ineligible")
-        void sameDayIsNotEligible() {
-            EligibilityResult result = service.evaluate(TODAY, INTERVAL, TODAY);
-
-            assertFalse(result.isEligible());
-            assertEquals(0, result.daysSinceLast());
-        }
-    }
-
-    @Nested
-    @DisplayName("The next permitted date")
-    class NextEligibleDate {
-
-        @Test
-        @DisplayName("is the last donation plus the interval")
-        void computedFromLastDonation() {
-            LocalDate lastDonation = LocalDate.of(2026, 7, 1);
-
-            EligibilityResult result = service.evaluate(lastDonation, INTERVAL, TODAY);
-
-            assertFalse(result.isEligible());
-            assertEquals(LocalDate.of(2026, 9, 23), result.nextEligibleDate());
-        }
-
-        @Test
-        @DisplayName("days remaining counts from today, not from the last donation")
-        void daysRemainingIsFromToday() {
-            // 30 days elapsed of 84 required, so 54 remain.
-            EligibilityResult result = service.evaluate(LocalDate.now().minusDays(30), INTERVAL,
-                    LocalDate.now());
-
-            assertEquals(54, result.getDaysRemaining());
-        }
-
-        @Test
-        @DisplayName("is not in the future once the donor is eligible")
-        void zeroRemainingWhenEligible() {
-            EligibilityResult result = service.evaluate(TODAY.minusDays(200), INTERVAL, TODAY);
-
-            assertEquals(0, result.getDaysRemaining());
-        }
-    }
-
-    @Nested
-    @DisplayName("A configurable interval")
-    class ConfigurableInterval {
-
-        @ParameterizedTest(name = "{0} days elapsed against a {1} day interval -> eligible={2}")
-        @CsvSource({
-                "56,  56, true",
-                "55,  56, false",
-                "84,  56, true",
-                "90, 120, false",
-                "120,120, true",
-                "1,    1, true",
-                "0,    0, true"
-        })
-        @DisplayName("the rule follows whatever interval is configured")
-        void honoursConfiguredInterval(long daysElapsed, int intervalDays, boolean expected) {
-            EligibilityResult result =
-                    service.evaluate(TODAY.minusDays(daysElapsed), intervalDays, TODAY);
-
-            assertEquals(expected, result.isEligible());
-            assertEquals(intervalDays, result.intervalDays());
-        }
-
-        @Test
-        @DisplayName("an interval of zero makes every donor eligible immediately")
-        void zeroIntervalAlwaysEligible() {
-            assertTrue(service.evaluate(TODAY, 0, TODAY).isEligible());
-        }
-    }
-
-    @Nested
-    @DisplayName("Bad input")
-    class BadInput {
-
-        @Test
-        @DisplayName("a donation dated in the future is treated as not eligible, not as a huge gap")
-        void futureDonationIsNotEligible() {
-            EligibilityResult result = service.evaluate(TODAY.plusDays(5), INTERVAL, TODAY);
-
-            assertFalse(result.isEligible());
-            assertEquals(-5, result.daysSinceLast());
-        }
-
-        @Test
-        @DisplayName("a negative interval is rejected rather than silently accepted")
-        void negativeIntervalRejected() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.evaluate(TODAY.minusDays(10), -1, TODAY));
-        }
-
-        @Test
-        @DisplayName("a missing 'today' is rejected")
-        void nullTodayRejected() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.evaluate(TODAY.minusDays(10), INTERVAL, null));
-        }
+    @BeforeEach
+    void setUp() {
+        settingsService = mock(SettingsService.class);
+        donorDao = mock(DonorDao.class);
+        donationDao = mock(DonationDao.class);
+        Clock fixedClock = new MockClock(FIXED_DATE);
+        service = new EligibilityService(settingsService, donorDao, donationDao, fixedClock);
     }
 
     @Test
-    @DisplayName("the default interval is the 84 days the proposal specifies")
-    void defaultIntervalMatchesProposal() {
-        assertEquals(84, EligibilityService.DEFAULT_INTERVAL_DAYS);
+    @DisplayName("first-time donor with no donation history is eligible")
+    void firstTimeDonorIsEligible() throws Exception {
+        Connection conn = mock(Connection.class);
+        Donor donor = donorWithId(DONOR_ID);
+        when(donorDao.findById(conn, DONOR_ID)).thenReturn(Optional.of(donor));
+        when(donationDao.findLastDonationDate(conn, DONOR_ID)).thenReturn(Optional.empty());
+        when(settingsService.getString(conn, "minimum_donation_interval_days", null)).thenReturn("84");
+
+        EligibilityResult result = service.evaluate(conn, DONOR_ID);
+
+        assertEquals(EligibilityStatus.ELIGIBLE, result.status());
+        assertEquals(0, result.daysRemaining());
+        assertNull(result.nextPermittedDate());
+    }
+
+    @Test
+    @DisplayName("last donation exactly 84 days before the fixed date is eligible")
+    void donationAtBoundaryIsEligible() throws Exception {
+        Connection conn = mock(Connection.class);
+        Donor donor = donorWithId(DONOR_ID);
+        when(donorDao.findById(conn, DONOR_ID)).thenReturn(Optional.of(donor));
+        when(donationDao.findLastDonationDate(conn, DONOR_ID)).thenReturn(Optional.of(FIXED_DATE.minusDays(84)));
+        when(settingsService.getString(conn, "minimum_donation_interval_days", null)).thenReturn("84");
+
+        EligibilityResult result = service.evaluate(conn, DONOR_ID);
+
+        assertEquals(EligibilityStatus.ELIGIBLE, result.status());
+        assertEquals(0, result.daysRemaining());
+        assertNull(result.nextPermittedDate());
+    }
+
+    @Test
+    @DisplayName("last donation 83 days before the fixed date is not eligible")
+    void donationOneDayShortIsNotEligible() throws Exception {
+        Connection conn = mock(Connection.class);
+        Donor donor = donorWithId(DONOR_ID);
+        when(donorDao.findById(conn, DONOR_ID)).thenReturn(Optional.of(donor));
+        when(donationDao.findLastDonationDate(conn, DONOR_ID)).thenReturn(Optional.of(FIXED_DATE.minusDays(83)));
+        when(settingsService.getString(conn, "minimum_donation_interval_days", null)).thenReturn("84");
+
+        EligibilityResult result = service.evaluate(conn, DONOR_ID);
+
+        assertEquals(EligibilityStatus.NOT_ELIGIBLE, result.status());
+        assertEquals(1, result.daysRemaining());
+        assertEquals(FIXED_DATE.plusDays(1), result.nextPermittedDate());
+    }
+
+    @Test
+    @DisplayName("repeated donation on the same date is not eligible")
+    void sameDayDonationIsNotEligible() throws Exception {
+        Connection conn = mock(Connection.class);
+        Donor donor = donorWithId(DONOR_ID);
+        when(donorDao.findById(conn, DONOR_ID)).thenReturn(Optional.of(donor));
+        when(donationDao.findLastDonationDate(conn, DONOR_ID)).thenReturn(Optional.of(FIXED_DATE));
+        when(settingsService.getString(conn, "minimum_donation_interval_days", null)).thenReturn("84");
+
+        EligibilityResult result = service.evaluate(conn, DONOR_ID);
+
+        assertEquals(EligibilityStatus.NOT_ELIGIBLE, result.status());
+        assertEquals(84, result.daysRemaining());
+        assertEquals(FIXED_DATE.plusDays(84), result.nextPermittedDate());
+    }
+
+    @Test
+    @DisplayName("donor not found raises a clear exception")
+    void donorNotFoundThrows() throws Exception {
+        Connection conn = mock(Connection.class);
+        when(donorDao.findById(conn, DONOR_ID)).thenReturn(Optional.empty());
+
+        assertThrows(DonorNotFoundException.class, () -> service.evaluate(conn, DONOR_ID));
+    }
+
+    @Test
+    @DisplayName("custom waiting period is loaded from settings")
+    void customWaitingPeriodIsLoaded() throws Exception {
+        Connection conn = mock(Connection.class);
+        Donor donor = donorWithId(DONOR_ID);
+        when(donorDao.findById(conn, DONOR_ID)).thenReturn(Optional.of(donor));
+        when(donationDao.findLastDonationDate(conn, DONOR_ID)).thenReturn(Optional.of(FIXED_DATE.minusDays(30)));
+        when(settingsService.getString(conn, "minimum_donation_interval_days", null)).thenReturn("60");
+
+        EligibilityResult result = service.evaluate(conn, DONOR_ID);
+
+        assertEquals(EligibilityStatus.NOT_ELIGIBLE, result.status());
+        assertEquals(30, result.daysRemaining());
+        assertEquals(FIXED_DATE.plusDays(30), result.nextPermittedDate());
+        verify(settingsService).getString(conn, "minimum_donation_interval_days", null);
+    }
+
+    @Test
+    @DisplayName("missing settings fall back to the default interval")
+    void missingSettingFallsBackToDefault() throws Exception {
+        Connection conn = mock(Connection.class);
+        Donor donor = donorWithId(DONOR_ID);
+        when(donorDao.findById(conn, DONOR_ID)).thenReturn(Optional.of(donor));
+        when(donationDao.findLastDonationDate(conn, DONOR_ID)).thenReturn(Optional.of(FIXED_DATE.minusDays(83)));
+        when(settingsService.getString(conn, "minimum_donation_interval_days", null)).thenReturn(null);
+
+        EligibilityResult result = service.evaluate(conn, DONOR_ID);
+
+        assertEquals(EligibilityStatus.NOT_ELIGIBLE, result.status());
+        assertEquals(1, result.daysRemaining());
+        assertEquals(FIXED_DATE.plusDays(1), result.nextPermittedDate());
+    }
+
+    @Test
+    @DisplayName("invalid setting values follow the service fallback policy")
+    void invalidSettingFallsBackToDefault() throws Exception {
+        Connection conn = mock(Connection.class);
+        Donor donor = donorWithId(DONOR_ID);
+        when(donorDao.findById(conn, DONOR_ID)).thenReturn(Optional.of(donor));
+        when(donationDao.findLastDonationDate(conn, DONOR_ID)).thenReturn(Optional.of(FIXED_DATE.minusDays(83)));
+        when(settingsService.getString(conn, "minimum_donation_interval_days", null)).thenReturn("not-a-number");
+
+        EligibilityResult result = service.evaluate(conn, DONOR_ID);
+
+        assertEquals(EligibilityStatus.NOT_ELIGIBLE, result.status());
+        assertEquals(1, result.daysRemaining());
+        assertEquals(FIXED_DATE.plusDays(1), result.nextPermittedDate());
+    }
+
+    private Donor donorWithId(long donorId) {
+        Donor donor = new Donor();
+        donor.setDonorId(donorId);
+        return donor;
+    }
+
+    private static final class MockClock extends Clock {
+        private final LocalDate date;
+
+        private MockClock(LocalDate date) {
+            this.date = date;
+        }
+
+        @Override
+        public ZoneOffset getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(java.time.ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return date.atStartOfDay(ZoneOffset.UTC).toInstant();
+        }
     }
 }
