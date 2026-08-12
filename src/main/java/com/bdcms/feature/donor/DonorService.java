@@ -5,6 +5,7 @@ import com.bdcms.shared.db.Tx;
 import com.bdcms.shared.util.Validate;
 import jakarta.servlet.http.Part;
 
+import java.sql.Connection;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
@@ -113,6 +114,10 @@ public class DonorService {
 
     public Optional<Donor> findById(long donorId) {
         return Tx.read(conn -> donorDao.findById(conn, donorId));
+    }
+
+    public Optional<Donor> findById(Connection conn, long donorId) {
+        return donorDao.findById(conn, donorId);
     }
 
     public Optional<Donor> findByNationalId(String nationalId) {
