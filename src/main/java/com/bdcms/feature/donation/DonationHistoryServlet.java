@@ -11,7 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.Optional;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 /**
  * A donor's complete donation history (FR-6).
  *
@@ -19,8 +20,10 @@ import java.util.Optional;
  * donor, card, history and current eligibility - because the donation feature
  * is the only one permitted to compose the others.
  */
-@WebServlet(name = "donationHistoryServlet", urlPatterns = "/app/donations/history")
+@WebServlet(name = "donationHistoryServlet", urlPatterns = {"/app/donations/history", "/app/donors/*"})
 public class DonationHistoryServlet extends BaseServlet {
+
+    private static final Pattern PATH_PATTERN = Pattern.compile("^/(\\d+)/donations/?$");
 
     private final DonationService donationService = new DonationService();
     private final DonorService donorService = new DonorService();
@@ -30,23 +33,42 @@ public class DonationHistoryServlet extends BaseServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        Optional<Long> donorId = longParam(request, "donorId");
-        if (donorId.isEmpty()) {
+        Long donorId = extractDonorId(request);
+        if (donorId == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "donorId is required");
             return;
         }
-        Optional<Donor> donor = donorService.findById(donorId.get());
+
+        Optional<Donor> donor = donorService.findById(donorId);
         if (donor.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such donor");
             return;
         }
 
         request.setAttribute("donor", donor.get());
-        request.setAttribute("donations", donationService.historyForDonor(donorId.get()));
-        request.setAttribute("eligibility", donationService.eligibilityFor(donorId.get()));
+        request.setAttribute("donations", donationService.historyForDonor(donorId));
+        request.setAttribute("eligibility", donationService.eligibilityFor(donorId));
         request.setAttribute("activeCard",
-                cardService.findActiveByDonor(donorId.get()).orElse(null));
+                cardService.findActiveByDonor(donorId).orElse(null));
 
         render(request, response, "donation/history.jsp");
+    }
+
+    private Long extractDonorId(HttpServletRequest request) {
+        String pathInfo = request.getPathInfo();
+        if (pathInfo == null || pathInfo.isBlank()) {
+            Optional<Long> donorId = longParam(request, "donorId");
+            return donorId.orElse(null);
+        }
+
+        Matcher matcher = PATH_PATTERN.matcher(pathInfo);
+        if (matcher.matches()) {
+            try {
+                return Long.parseLong(matcher.group(1));
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 }
