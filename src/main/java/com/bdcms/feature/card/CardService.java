@@ -70,6 +70,10 @@ public class CardService {
         return Tx.read(conn -> cardDao.findById(conn, cardId));
     }
 
+    public Optional<DonorCard> findById(Connection conn, long cardId) {
+        return cardDao.findById(conn, cardId);
+    }
+
     public int countActive() {
         return Tx.read(cardDao::countActive);
     }
