@@ -20,7 +20,6 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,7 +62,7 @@ class DonationServiceTest {
     @Test
     @DisplayName("successful donation recording writes a donation and returns a donation entity")
     void successfulRecording() {
-        Donation donation = new Donation();
+        // prepare placeholders for collaborators
         Donor donor = donorWithId(DONOR_ID);
         DonorCard card = donorCard(CARD_ID, DONOR_ID, true);
         User staff = user(STAFF_ID, true);

@@ -77,7 +77,7 @@ public class EligibilityService {
         }
 
         if (lastDonationDate == null) {
-            return EligibilityResult.eligible(null, -1, intervalDays, today, today);
+            return EligibilityResult.eligible(null, -1, intervalDays, today, null);
         }
 
         long daysSince = ChronoUnit.DAYS.between(lastDonationDate, today);
@@ -88,7 +88,7 @@ public class EligibilityService {
         }
 
         if (daysSince >= intervalDays) {
-            return EligibilityResult.eligible(lastDonationDate, daysSince, intervalDays, today, today);
+            return EligibilityResult.eligible(lastDonationDate, daysSince, intervalDays, today, null);
         }
 
         LocalDate nextPermittedDate = lastDonationDate.plusDays(intervalDays);
