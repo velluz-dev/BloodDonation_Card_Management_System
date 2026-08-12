@@ -2,6 +2,7 @@ package com.bdcms.feature.auth;
 
 import com.bdcms.shared.db.Tx;
 
+import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,6 +65,10 @@ public class AuthService {
 
     public Optional<User> findById(long userId) {
         return Tx.read(conn -> userDao.findById(conn, userId));
+    }
+
+    public Optional<User> findById(Connection conn, long userId) {
+        return userDao.findById(conn, userId);
     }
 
     /** Creates a staff account. Returns empty when the username is taken. */
