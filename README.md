@@ -111,6 +111,7 @@ That live run caught two defects the build could not: Jakarta EL 5.0 cannot read
 
 | Document | Contents |
 |---|---|
+| [USER-MANUAL.md](USER-MANUAL.md) | **For users** — how to operate the system, by role: staff, administrator, and what to tell donors |
 | [TEAM-GUIDE.md](TEAM-GUIDE.md) | **For teammates** — folder structure, machine setup, who edits what, git workflow |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Feature map, dependency graph, request trace, the transaction, design decisions |
 | [SETUP.md](SETUP.md) | Install, build, run, sign in, guided walkthrough, troubleshooting |
