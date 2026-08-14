@@ -7,7 +7,7 @@
 <div class="row justify-content-center">
   <div class="col-12 col-lg-7">
 
-    <h1 class="h3 mb-3">
+    <h1 class="bd-page-title mb-3">
       <c:choose>
         <c:when test="${empty existingCard}">Issue a donation card</c:when>
         <c:otherwise>Reissue a donation card</c:otherwise>
@@ -22,8 +22,8 @@
                  alt="Photograph of ${fn:escapeXml(donor.fullName)}" class="bdcms-thumb">
           </div>
           <div class="col">
-            <div class="fs-5 fw-semibold"><c:out value="${donor.fullName}" /></div>
-            <div class="text-muted small">
+            <div style="font:600 18px/1.2 var(--bd-sans)"><c:out value="${donor.fullName}" /></div>
+            <div style="font:400 12.5px/1.5 var(--bd-sans);color:var(--bd-ink-60);margin-top:5px">
               <span class="font-monospace"><c:out value="${donor.nationalId}" /></span> &middot;
               <c:out value="${donor.bloodGroup.label}" /> &middot; ${donor.age} yrs
             </div>

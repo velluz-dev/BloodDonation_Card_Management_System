@@ -46,6 +46,15 @@ public class VerificationAuditServlet extends BaseServlet {
         request.setAttribute("hasNextPage", entries.size() == PAGE_SIZE);
         request.setAttribute("results", VerificationResult.values());
 
+        // Outcome tally beside the log. When no range is filtered the summary
+        // covers the last 30 days rather than all time: "how are we doing
+        // lately" is the question this screen is opened to answer.
+        LocalDate summaryFrom = from == null ? LocalDate.now().minusDays(30) : from;
+        LocalDate summaryTo = to == null ? LocalDate.now() : to;
+        request.setAttribute("outcomes", verificationService.outcomeCounts(summaryFrom, summaryTo));
+        request.setAttribute("summaryFrom", summaryFrom);
+        request.setAttribute("summaryTo", summaryTo);
+
         render(request, response, "verification/audit.jsp");
     }
 }
