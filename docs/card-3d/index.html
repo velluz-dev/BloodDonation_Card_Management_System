@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Donor Card — 3D object · BDCMS</title>
+
+<!--
+  Three.js is vendored into ./vendor/three rather than loaded from a CDN, so
+  this page works with no internet connection - the same rule the application
+  itself follows for Bootstrap and its fonts. A demonstration on a lab machine
+  with no network has to work.
+
+  The integrity hashes from the original design file are deliberately not
+  carried over: subresource integrity applies to remote fetches, and these
+  files are local. The versions they pinned are recorded in README.md instead.
+-->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "./vendor/three/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "./vendor/three/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "./vendor/three/exporters/GLTFExporter.js"
+  }
+}
+</script>
+
+<style>
+  @font-face {
+    font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap;
+    src: url('./fonts/archivo-400.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap;
+    src: url('./fonts/archivo-500.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap;
+    src: url('./fonts/archivo-600.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Roboto Mono'; font-style: normal; font-weight: 400; font-display: swap;
+    src: url('./fonts/robotomono-400.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Roboto Mono'; font-style: normal; font-weight: 500; font-display: swap;
+    src: url('./fonts/robotomono-500.woff2') format('woff2');
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #EFEBE3;
+    font-family: Archivo, system-ui, sans-serif;
+    color: #17150F;
+  }
+  body { display: flex; flex-direction: column; }
+  a { color: #B01E2A; text-decoration: none; }
+  a:hover { color: #8C1721; text-decoration: underline; }
+
+  three-d-stage:not(:defined) { visibility: hidden; }
+  three-d-stage { flex: 1; min-height: 0; }
+
+  header {
+    padding: 24px 32px 18px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 28px;
+    flex: none;
+    border-bottom: 1px solid rgba(23, 21, 15, .14);
+  }
+
+  /* Shown only when the page is opened straight off the disk, where the
+     browser refuses to load ES modules. See README.md. */
+  #file-warning {
+    display: none;
+    margin: 0;
+    padding: 14px 32px;
+    background: rgba(176, 30, 42, .07);
+    border-bottom: 1px solid rgba(176, 30, 42, .3);
+    font: 400 13.5px/1.6 Archivo, sans-serif;
+    color: rgba(23, 21, 15, .8);
+  }
+  #file-warning code {
+    font: 500 12.5px/1 'Roboto Mono', monospace;
+    background: rgba(23, 21, 15, .07);
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;flex-direction:column;gap:7px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" style="display:block;flex:none" aria-hidden="true">
+        <rect width="24" height="24" rx="5.5" fill="#B01E2A"/>
+        <path d="M12 5.1c0 0-4.85 5.25-4.85 8.25a4.85 4.85 0 0 0 9.7 0c0-3-4.85-8.25-4.85-8.25z" fill="#FBF8F3"/>
+        <path d="M9.4 13.9a2.6 2.6 0 0 0 2.6 2.6" stroke="#B01E2A" stroke-width="1.05"
+              stroke-linecap="round" fill="none"/>
+      </svg>
+      <span style="font:500 10px/1 'Roboto Mono',monospace;letter-spacing:.15em;color:rgba(23,21,15,.5)">
+        BDCMS · PHYSICAL ARTEFACT
+      </span>
+    </div>
+    <h1 style="font:600 26px/1.15 Archivo,sans-serif;letter-spacing:-.015em;margin:0">Donor card, ID-1</h1>
+    <p style="font:400 13.5px/1.55 Archivo,sans-serif;color:rgba(23,21,15,.6);margin:0;max-width:560px">
+      85.6 &times; 54 &times; 0.76 mm, modelled to scale, with the system logo raised on the
+      front face. Drag to orbit and see the back &mdash; magnetic stripe, chip, conditions of
+      use, signature panel. Download as OBJ + MTL or GLB from the toolbar.
+    </p>
+  </div>
+  <div style="font:400 12.5px/1.6 Archivo,sans-serif;color:rgba(23,21,15,.55);text-align:right;flex:none">
+    <a href="../../README.md">&larr; Back to the project</a><br>
+    <span style="font:400 11px/1.6 'Roboto Mono',monospace;color:rgba(23,21,15,.45)">
+      geometry only · type is blocked in
+    </span>
+  </div>
+</header>
+
+<p id="file-warning">
+  <strong>This page is open directly from the disk</strong>, and browsers refuse to load
+  JavaScript modules over <code>file://</code>, so the card will not appear. Serve the
+  folder over HTTP instead &mdash; double-click <code>serve.cmd</code> in this directory,
+  or run <code>jwebserver -p 8000 -d .</code> here and open
+  <code>http://localhost:8000/</code>.
+</p>
+
+<three-d-stage name="bdcms-donor-card" background="#EFEBE3" autorotate></three-d-stage>
+
+<script>
+  // Modules silently fail to load from file://, which would leave a blank page
+  // and no clue why. Say so plainly instead.
+  if (location.protocol === 'file:') {
+    document.getElementById('file-warning').style.display = 'block';
+  }
+</script>
+<script src="three-d-stage.js"></script>
+<script type="module" src="card-3d.js"></script>
+</body>
+</html>
