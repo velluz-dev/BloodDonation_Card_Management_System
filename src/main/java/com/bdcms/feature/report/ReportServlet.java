@@ -26,6 +26,29 @@ import java.time.LocalDate;
 public class ReportServlet extends BaseServlet {
 
     private final ReportService reportService = new ReportService();
+    private final com.bdcms.feature.verification.VerificationService verificationService =
+            new com.bdcms.feature.verification.VerificationService();
+    private final com.bdcms.feature.donor.DonorService donorService =
+            new com.bdcms.feature.donor.DonorService();
+
+    /**
+     * Blood-group counts as bar widths, scaled against the largest group so the
+     * rail always uses its full width.
+     */
+    private java.util.List<com.bdcms.feature.dashboard.GroupShare> bloodGroupMix() {
+        java.util.Map<com.bdcms.feature.donor.BloodGroup, Integer> counts =
+                donorService.countByBloodGroup();
+        int largest = counts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+
+        java.util.List<com.bdcms.feature.dashboard.GroupShare> rows =
+                new java.util.ArrayList<>(counts.size());
+        for (java.util.Map.Entry<com.bdcms.feature.donor.BloodGroup, Integer> e : counts.entrySet()) {
+            int share = largest == 0 ? 0 : Math.round(e.getValue() * 100f / largest);
+            rows.add(new com.bdcms.feature.dashboard.GroupShare(
+                    e.getKey().getLabel(), e.getValue(), share));
+        }
+        return rows;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -53,6 +76,14 @@ public class ReportServlet extends BaseServlet {
         request.setAttribute("types", ReportType.values());
         request.setAttribute("from", from);
         request.setAttribute("to", to);
+
+        // Rail figures. These sit beside every report rather than only the one
+        // they belong to, because "how many attempts failed" is the question an
+        // administrator asks whichever report they opened.
+        request.setAttribute("bloodGroupMix", bloodGroupMix());
+        request.setAttribute("verificationOutcomes",
+                verificationService.outcomeCounts(from, to));
+
         render(request, response, "report/reports.jsp");
     }
 

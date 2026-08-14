@@ -124,6 +124,19 @@ public class CardDao {
         }
     }
 
+    /** How many cards currently sit in a given state. Feeds the dashboard rail. */
+    public int countByStatus(Connection conn, CardStatus status) {
+        String sql = "SELECT COUNT(*) FROM donor_cards WHERE status = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            throw new DaoException("Could not count " + status + " cards", e);
+        }
+    }
+
     public int countActive(Connection conn) {
         String sql = "SELECT COUNT(*) FROM donor_cards WHERE status = 'ACTIVE'";
         try (PreparedStatement ps = conn.prepareStatement(sql);

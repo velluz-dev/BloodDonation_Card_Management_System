@@ -153,6 +153,11 @@ public class VerificationService {
         return Tx.read(conn -> logDao.countSince(conn, from, false));
     }
 
+    /** Attempts per outcome over a period, every outcome present even at zero. */
+    public java.util.Map<VerificationResult, Integer> outcomeCounts(LocalDate from, LocalDate to) {
+        return Tx.read(conn -> logDao.countByResult(conn, from, to));
+    }
+
     private VerificationResult record(Connection conn, String cardNo, Long donorId, long staffId,
                                       VerificationResult result, String detail) {
         VerificationLog log = new VerificationLog();

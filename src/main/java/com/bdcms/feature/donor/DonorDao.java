@@ -9,7 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -175,6 +177,30 @@ public class DonorDao {
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new DaoException("Could not update PIN for donor " + donorId, e);
+        }
+    }
+
+    /**
+     * Donor headcount per blood group, largest first.
+     *
+     * <p>Feeds the dashboard rail. Groups with no donors are omitted rather
+     * than shown as zero rows - an empty bar tells staff nothing.
+     */
+    public Map<BloodGroup, Integer> countByBloodGroup(Connection conn) {
+        String sql = "SELECT blood_group, COUNT(*) AS n FROM donors "
+                + "GROUP BY blood_group ORDER BY n DESC";
+        Map<BloodGroup, Integer> counts = new LinkedHashMap<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Optional<BloodGroup> group = BloodGroup.parse(rs.getString("blood_group"));
+                if (group.isPresent()) {
+                    counts.put(group.get(), rs.getInt("n"));
+                }
+            }
+            return counts;
+        } catch (SQLException e) {
+            throw new DaoException("Could not count donors by blood group", e);
         }
     }
 

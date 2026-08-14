@@ -74,6 +74,11 @@ public class CardService {
         return Tx.read(cardDao::countActive);
     }
 
+    /** How many cards are currently in a given state. */
+    public int countByStatus(CardStatus status) {
+        return Tx.read(conn -> cardDao.countByStatus(conn, status));
+    }
+
     // ---- commands ----------------------------------------------------------
 
     /**

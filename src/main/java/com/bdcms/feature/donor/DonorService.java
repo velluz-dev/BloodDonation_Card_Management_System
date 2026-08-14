@@ -132,6 +132,11 @@ public class DonorService {
         return Tx.read(donorDao::countAll);
     }
 
+    /** Donor headcount per blood group, largest first. */
+    public java.util.Map<BloodGroup, Integer> countByBloodGroup() {
+        return Tx.read(donorDao::countByBloodGroup);
+    }
+
     /** Updates the editable demographic fields. The national ID is never changed. */
     public Validate.Errors update(Donor donor, Part photo) {
         Validate.Errors errors = validateEditable(donor);

@@ -56,6 +56,7 @@ public class CardPrintServlet extends BaseServlet {
 
         request.setAttribute("donor", donor.get());
         request.setAttribute("card", card.get());
+        request.setAttribute("centreName", com.bdcms.shared.config.AppConfig.defaultCentre());
         render(request, response, "card/print.jsp");
     }
 

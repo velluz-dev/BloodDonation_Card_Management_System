@@ -27,6 +27,9 @@ public abstract class BaseServlet extends HttpServlet {
         request.setAttribute("currentUser", SessionUser.from(request));
         // ISO today, for pre-filling and bounding <input type="date"> fields.
         request.setAttribute("today", LocalDate.now().toString());
+        // Wall-clock time, for the "looked up at" stamp on the verification screen.
+        request.setAttribute("nowTime", java.time.LocalTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")));
         request.getRequestDispatcher("/WEB-INF/views/" + view).forward(request, response);
     }
 

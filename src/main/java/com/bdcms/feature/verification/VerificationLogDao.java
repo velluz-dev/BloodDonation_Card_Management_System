@@ -11,7 +11,9 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** All SQL against the {@code verification_log} table (FR-4). Insert and read only - never update. */
 public class VerificationLogDao {
@@ -88,6 +90,35 @@ public class VerificationLogDao {
             return entries;
         } catch (SQLException e) {
             throw new DaoException("Could not read the verification log", e);
+        }
+    }
+
+    /**
+     * How many attempts ended in each outcome over a period.
+     *
+     * <p>Every {@link VerificationResult} appears, including the ones with no
+     * occurrences: "zero photo mismatches this month" is a finding, and a row
+     * that silently vanishes cannot report it.
+     */
+    public Map<VerificationResult, Integer> countByResult(Connection conn, LocalDate from, LocalDate to) {
+        Map<VerificationResult, Integer> counts = new LinkedHashMap<>();
+        for (VerificationResult result : VerificationResult.values()) {
+            counts.put(result, 0);
+        }
+
+        String sql = "SELECT result, COUNT(*) AS n FROM verification_log "
+                + "WHERE attempted_at >= ? AND attempted_at < ? GROUP BY result";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setTimestamp(1, java.sql.Timestamp.valueOf(from.atStartOfDay()));
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(to.plusDays(1).atStartOfDay()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    counts.put(VerificationResult.valueOf(rs.getString("result")), rs.getInt("n"));
+                }
+            }
+            return counts;
+        } catch (SQLException e) {
+            throw new DaoException("Could not summarise verification outcomes", e);
         }
     }
 
