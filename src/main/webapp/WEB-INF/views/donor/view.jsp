@@ -23,7 +23,7 @@
       <div class="card-body text-center">
         <img src="${ctx}/app/donors/photo?donorId=${donor.donorId}"
              alt="Photograph of ${fn:escapeXml(donor.fullName)}"
-             class="bdcms-verify-photo mb-3">
+             class="bdcms-portrait mx-auto mb-3">
         <h1 class="h4 mb-1"><c:out value="${donor.fullName}" /></h1>
         <div class="mb-2">
           <span class="badge text-bg-danger fs-6"><c:out value="${donor.bloodGroup.label}" /></span>

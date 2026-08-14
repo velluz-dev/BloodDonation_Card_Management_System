@@ -23,59 +23,58 @@
 <body class="bdcms">
 
 <c:if test="${not empty currentUser}">
-  <nav class="navbar navbar-expand-lg navbar-dark bdcms-navbar sticky-top">
-    <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="${ctx}/app/dashboard">
-        <span class="bdcms-drop" aria-hidden="true"></span>
-        <span>BDCMS</span>
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-              data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
-              aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+  <nav class="bdcms-navbar">
+    <a class="navbar-brand" href="${ctx}/app/dashboard">
+      <span class="bdcms-drop" aria-hidden="true"></span>
+      <span>BDCMS</span>
+    </a>
 
-      <div class="collapse navbar-collapse" id="mainNav">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link ${nav eq 'dashboard' ? 'active' : ''}" href="${ctx}/app/dashboard">Dashboard</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link ${nav eq 'verify' ? 'active' : ''}" href="${ctx}/app/verify">Verify &amp; Donate</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link ${nav eq 'donors' ? 'active' : ''}" href="${ctx}/app/donors">Donors</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link ${nav eq 'register' ? 'active' : ''}" href="${ctx}/app/donors/register">Register Donor</a>
-          </li>
-          <c:if test="${currentUser.admin}">
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle ${nav eq 'admin' ? 'active' : ''}" href="#"
-                 role="button" data-bs-toggle="dropdown" aria-expanded="false">Administration</a>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="${ctx}/app/reports">Reports</a></li>
-                <li><a class="dropdown-item" href="${ctx}/app/admin/verification-log">Verification Audit Log</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="${ctx}/app/admin/users">Staff Accounts</a></li>
-                <li><a class="dropdown-item" href="${ctx}/app/admin/settings">System Settings</a></li>
-              </ul>
-            </li>
-          </c:if>
-        </ul>
+    <button class="navbar-toggler d-lg-none border-0 p-0 ms-auto me-2" type="button"
+            data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-        <div class="d-flex align-items-center gap-3">
-          <span class="navbar-text small">
-            <c:out value="${currentUser.fullName}" />
-            <span class="badge ${currentUser.admin ? 'text-bg-light' : 'text-bg-secondary'} ms-1">
-              <c:out value="${currentUser.role}" />
-            </span>
-          </span>
-          <form method="post" action="${ctx}/logout" class="m-0">
-            <input type="hidden" name="_csrf" value="${csrfToken}">
-            <button type="submit" class="btn btn-sm btn-outline-light">Sign out</button>
-          </form>
-        </div>
+    <div class="collapse navbar-collapse d-lg-flex" id="mainNav">
+      <ul class="navbar-nav me-auto mb-0">
+        <li class="nav-item">
+          <a class="nav-link ${nav eq 'dashboard' ? 'active' : ''}" href="${ctx}/app/dashboard">Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link ${nav eq 'donors' ? 'active' : ''}" href="${ctx}/app/donors">Donors</a>
+        </li>
+        <%-- The mockup shows a "Cards" tab. There is no cards index in this
+             system: a card is always reached through the donor who holds it,
+             which is the same rule the data model follows. Rather than link to
+             a page that does not exist, the tab is omitted. --%>
+        <li class="nav-item">
+          <a class="nav-link ${nav eq 'verify' ? 'active' : ''}" href="${ctx}/app/verify">Verify &amp; record</a>
+        </li>
+        <c:if test="${currentUser.admin}">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle ${nav eq 'admin' ? 'active' : ''}" href="#"
+               role="button" data-bs-toggle="dropdown" aria-expanded="false">Reports</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="${ctx}/app/reports">Reports &amp; PDF export</a></li>
+              <li><a class="dropdown-item" href="${ctx}/app/admin/verification-log">Verification audit log</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="${ctx}/app/admin/users">Staff accounts</a></li>
+              <li><a class="dropdown-item" href="${ctx}/app/admin/settings">System settings</a></li>
+            </ul>
+          </li>
+        </c:if>
+      </ul>
+
+      <div class="d-flex align-items-center gap-3">
+        <span class="bdcms-navbar-user"><c:out value="${currentUser.fullName}" /></span>
+        <span class="bdcms-role ${currentUser.admin ? 'bdcms-role-admin' : ''}">
+          <c:out value="${currentUser.role}" />
+        </span>
+        <form method="post" action="${ctx}/logout" class="m-0">
+          <input type="hidden" name="_csrf" value="${csrfToken}">
+          <button type="submit" class="btn btn-sm btn-quiet"
+                  style="border-color:rgba(239,235,227,.28);color:rgba(239,235,227,.75)">Sign out</button>
+        </form>
       </div>
     </div>
   </nav>
