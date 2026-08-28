@@ -82,6 +82,38 @@
         <button type="submit" class="btn btn-danger w-100 btn-lg">Sign in</button>
       </form>
 
+      <%-- Seeded demonstration accounts. Shown only when
+           bdcms.demo.credentials is on, so a real deployment turns them off
+           with one property rather than a code change. --%>
+      <c:if test="${not empty demoAccounts}">
+        <div class="bdcms-demo mt-4">
+          <div class="d-flex align-items-baseline justify-content-between gap-2 mb-2">
+            <span class="bd-eyebrow">Demonstration accounts</span>
+            <span class="bdcms-demo-warn">Seeded data &middot; remove before real use</span>
+          </div>
+
+          <div class="d-flex flex-column gap-1">
+            <c:forEach var="a" items="${demoAccounts}">
+              <button type="button" class="bdcms-demo-row"
+                      data-username="${fn:escapeXml(a.username)}"
+                      data-password="${fn:escapeXml(a.password)}"
+                      title="Fill the form with this account">
+                <span class="bdcms-demo-user"><c:out value="${a.username}" /></span>
+                <span class="bdcms-demo-pass"><c:out value="${a.password}" /></span>
+                <span class="badge ${a.admin ? 'text-bg-danger' : 'text-bg-secondary'}">
+                  <c:out value="${a.role}" />
+                </span>
+              </button>
+            </c:forEach>
+          </div>
+
+          <div class="bdcms-demo-hint">
+            Click a row to fill the form. Every demonstration donor's
+            verification PIN is <span class="font-monospace">1234</span>.
+          </div>
+        </div>
+      </c:if>
+
       <div class="d-flex gap-2 align-items-start mt-4"
            style="padding:13px 15px;background:var(--bd-wash);border-radius:var(--bd-r)">
         <span class="bdcms-dot bdcms-dot-grey" style="width:5px;height:5px;margin-top:7px"></span>
@@ -97,5 +129,16 @@
 </div>
 
 <script src="${ctx}/assets/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script>
+  // Click a demonstration row to fill the form. Deliberately does not submit:
+  // the assessor should see which account was chosen before signing in.
+  document.querySelectorAll('.bdcms-demo-row').forEach(function (row) {
+      row.addEventListener('click', function () {
+          document.getElementById('username').value = row.dataset.username;
+          document.getElementById('password').value = row.dataset.password;
+          document.getElementById('password').focus();
+      });
+  });
+</script>
 </body>
 </html>

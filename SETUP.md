@@ -140,7 +140,7 @@ Once it is running, the end-to-end suite exercises the whole system over HTTP:
 .\scripts\smoke-test.ps1
 ```
 
-**53 checks.** Reseed the database first — the suite records a donation and
+**56 checks.** Reseed the database first — the suite records a donation and
 deletes a donor, so a second run without reseeding reports failures that are
 the system working correctly.
 
@@ -187,6 +187,17 @@ C:\apache-tomcat-10.1.x\bin\startup.bat
 Every seeded demo donor has the verification **PIN `1234`**.
 
 > Change these before any real use. Passwords are stored as BCrypt hashes; an administrator can reset them at **Administration → Staff Accounts**.
+
+> The sign-in page lists these accounts with click-to-fill, so nobody has to
+> retype them during a demonstration. Turn that off for real use with one
+> property — no rebuild needed:
+>
+> ```powershell
+> .\mvnw.cmd cargo:run "-Dcargo.jvmargs=-Dbdcms.demo.credentials=false"
+> ```
+>
+> or set `bdcms.demo.credentials=false` in `src/main/resources/app.properties`.
+
 
 ---
 
@@ -280,7 +291,7 @@ Confirm `db/02_seed.sql` ran. `PasswordsTest.seededAdminHashIsValid` asserts tha
 ```
 ├── db/                 01_schema.sql · 02_seed.sql
 ├── docs/               er-diagram.md · test-evidence.md · card-3d/
-├── scripts/            smoke-test.ps1 — 53 end-to-end checks
+├── scripts/            smoke-test.ps1 — 56 end-to-end checks
 ├── src/main/java/      shared/ and feature/    (see ARCHITECTURE.md)
 ├── src/main/resources/ db.properties · app.properties
 ├── src/main/webapp/    WEB-INF/views/*  ·  assets/ (css, js, fonts, vendor)

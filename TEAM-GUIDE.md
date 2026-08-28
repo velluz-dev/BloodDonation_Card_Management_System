@@ -48,7 +48,7 @@ BloodDonation_Card_Management_System/
 | `db/02_seed.sql` | Demo data: 3 staff, 5 donors, 6 cards, 7 donations | **Ask first** |
 | `docs/` | ER diagram, test evidence | Yes, when you have something to record |
 | `docs/card-3d/` | The card as a 3D object. A presentation asset, not part of the app | Rarely |
-| `scripts/smoke-test.ps1` | 53 end-to-end checks against a running instance | **Yes** — add a check when you add a feature |
+| `scripts/smoke-test.ps1` | 56 end-to-end checks against a running instance | **Yes** — add a check when you add a feature |
 | `pom.xml` | Dependencies and build plugins | **Ask first** |
 | `mvnw`, `mvnw.cmd`, `.mvn/` | Maven wrapper — downloads Maven for you | **No** |
 | `target/` | Compiled classes and the WAR | **No** — auto-generated, excluded by `.gitignore` |
@@ -146,6 +146,7 @@ If port 8081 is taken on your machine: `.\mvnw.cmd cargo:run "-Dcargo.port=9090"
 | `admin` | `Admin@123` | Administrator — sees Reports, Settings, Audit Log |
 | `staff` | `Staff@123` | Staff — everyday counter work |
 
+The sign-in page lists these with click-to-fill, so you need not retype them.
 Every demo donor's verification PIN is **`1234`**.
 
 ### 6. Check your setup works
@@ -164,7 +165,7 @@ With the app running and the database freshly seeded:
 .\scripts\smoke-test.ps1
 ```
 
-**53 checks** covering login, CSRF, roles, ID masking, PIN, the eligibility
+**56 checks** covering login, CSRF, roles, ID masking, PIN, the eligibility
 boundary, PDF export, the audit trail and administrator deletion. Reseed before
 each run — the suite records a donation and deletes a donor, so a second run
 without reseeding reports failures that are the system behaving correctly.

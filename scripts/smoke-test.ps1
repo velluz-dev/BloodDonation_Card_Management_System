@@ -73,6 +73,12 @@ Check '  ...message does not say which field was wrong' ($bad.Content -match 'In
 $noCsrf = Req '/login' 'Post' @{ username='admin'; password='Admin@123' }
 Check 'CsrfFilter blocks POST with no token (403)' ($noCsrf.Status -eq 403) "status $($noCsrf.Status)"
 
+# Demo credentials panel. Present by default; hidden when the build is started
+# with -Dbdcms.demo.credentials=false, which this suite does not exercise.
+Check 'Demo accounts panel is shown' ($login.Content -match 'Demonstration accounts') 'panel missing'
+Check '  ...lists all three seeded accounts' (($login.Content -match 'Admin@123') -and ($login.Content -match 'Staff@123') -and ($login.Content -match 'Nurse@123')) 'accounts missing'
+Check '  ...and is labelled as demo-only' ($login.Content -match 'remove before real use') 'no warning'
+
 '=== 3. Sign in as admin ==='
 $csrf = Token (Req '/login').Content
 $ok = Req '/login' 'Post' @{ username='admin'; password='Admin@123'; _csrf=$csrf }

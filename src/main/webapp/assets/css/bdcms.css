@@ -1343,3 +1343,63 @@ body.bdcms > main {
 .bdcms-scan-bad {
     color: var(--bd-crimson-light);
 }
+
+/* ---- demonstration accounts panel ------------------------------------------ */
+
+/* Dashed rather than solid, and warm rather than crimson: this is scaffolding
+   for the demo, not a part of the product, and it should read that way. */
+.bdcms-demo {
+    border: 1px dashed rgba(23, 21, 15, .25);
+    border-radius: var(--bd-r-lg);
+    padding: 14px 16px;
+    background: rgba(23, 21, 15, .015);
+}
+
+.bdcms-demo-warn {
+    font: 500 9.5px/1 var(--bd-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--bd-crimson);
+}
+
+.bdcms-demo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    background: var(--bd-white);
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-r);
+    padding: 8px 11px;
+    cursor: pointer;
+    font-family: var(--bd-mono);
+}
+
+.bdcms-demo-row:hover {
+    border-color: var(--bd-ink);
+    background: #fff;
+}
+
+.bdcms-demo-row:focus-visible {
+    outline: 2px solid var(--bd-crimson);
+    outline-offset: 1px;
+}
+
+.bdcms-demo-user {
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 58px;
+}
+
+.bdcms-demo-pass {
+    font-size: 12.5px;
+    color: var(--bd-ink-60);
+    flex: 1;
+}
+
+.bdcms-demo-hint {
+    font: 400 11.5px/1.5 var(--bd-sans);
+    color: var(--bd-ink-50);
+    margin-top: 9px;
+}

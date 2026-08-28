@@ -169,7 +169,7 @@ The scriptlet was removed and the build returned to green. Java code cannot be c
 
 ---
 
-## 5. Live end-to-end run — 53 checks, all passing
+## 5. Live end-to-end run — 56 checks, all passing
 
 The application was deployed to embedded Tomcat 10.1.30 against a real MySQL
 8.0.37 instance and driven over HTTP: log in, look up cards, confirm identity,
@@ -205,7 +205,7 @@ mysql ... < db/02_seed.sql
 === 12. Roles (FR-1) ===            STAFF gets 403 on /app/admin, no admin menu,
                                     no delete control, delete endpoint refused
 
-================  53 passed, 0 failed  ================
+================  56 passed, 0 failed  ================
 ```
 
 ### Two defects only a live run could catch

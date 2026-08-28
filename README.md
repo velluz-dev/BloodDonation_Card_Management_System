@@ -49,7 +49,8 @@ mysql -u root -p < db/02_seed.sql
 .\mvnw.cmd clean package cargo:run
 ```
 
-Open <http://localhost:8081/bdcms> and sign in as `admin` / `Admin@123`.
+Open <http://localhost:8081/bdcms>. The sign-in page lists the demonstration
+accounts with click-to-fill — or sign in as `admin` / `Admin@123`.
 
 > **On this machine everything is already installed and verified.** MySQL 8.0.37 runs on port **3307** and the app on port **8081**. See the box at the top of **[SETUP.md](SETUP.md)** for the two commands that bring it back up after a reboot.
 
@@ -118,7 +119,7 @@ Then, against a running instance with the database freshly seeded:
 .\scripts\smoke-test.ps1
 ```
 
-**53 end-to-end checks, all passing** — login, CSRF, role enforcement, ID masking, PIN verification, the 84/83-day eligibility boundary, transactional recording, PDF export, the audit trail, and the guards on administrator deletion.
+**56 end-to-end checks, all passing** — login, CSRF, role enforcement, ID masking, PIN verification, the 84/83-day eligibility boundary, transactional recording, PDF export, the audit trail, and the guards on administrator deletion.
 
 That live run caught two defects the build could not: Jakarta EL 5.0 cannot read Java **records** as bean properties, and failed verifications were being written to the audit log twice. Both are fixed and documented in **[docs/test-evidence.md](docs/test-evidence.md)**.
 

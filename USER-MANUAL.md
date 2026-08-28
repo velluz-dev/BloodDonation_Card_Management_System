@@ -47,13 +47,18 @@ by hiding the menu.
 If you were sent to the login page by clicking a link, you return to that page
 after signing in rather than to the dashboard.
 
-**Demonstration accounts** (change these before real use):
+**Demonstration accounts.** The sign-in page lists these and fills the form when
+you click one, so there is nothing to remember during a demonstration:
 
 | Username | Password | Role |
 |---|---|---|
 | `admin` | `Admin@123` | Administrator |
 | `staff` | `Staff@123` | Staff |
 | `nurse` | `Nurse@123` | Staff |
+
+> That panel exists only because every account here is seeded and every donor
+> invented. An administrator turns it off for real use by setting
+> `bdcms.demo.credentials=false` — see [SETUP.md](SETUP.md).
 
 If the password is wrong you get *"Incorrect username or password."* The message
 is deliberately identical whether the username exists or not, and whether the

@@ -43,6 +43,27 @@ public final class AppConfig {
         return PROPS.getProperty("bdcms.centre.name", "Central Blood Bank");
     }
 
+    /**
+     * Whether the sign-in page lists the seeded demonstration accounts.
+     *
+     * <p>On by default because this build exists to be demonstrated, and making
+     * an assessor retype {@code Admin@123} helps nobody. It is a switch rather
+     * than a code edit so that turning it off for real use is a one-line change
+     * to {@code app.properties} - or a JVM flag, with no rebuild at all:
+     *
+     * <pre>-Dbdcms.demo.credentials=false</pre>
+     *
+     * <p>Publishing passwords on a login page would be indefensible for a live
+     * system. It is defensible here only because every account is seeded, every
+     * donor is invented, and the whole database is recreated by
+     * {@code db/01_schema.sql} on demand.
+     */
+    public static boolean showDemoCredentials() {
+        return Boolean.parseBoolean(
+                System.getProperty("bdcms.demo.credentials",
+                        PROPS.getProperty("bdcms.demo.credentials", "true")));
+    }
+
     public static String get(String key, String fallback) {
         return System.getProperty(key, PROPS.getProperty(key, fallback));
     }
