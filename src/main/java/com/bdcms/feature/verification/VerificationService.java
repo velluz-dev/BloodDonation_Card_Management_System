@@ -134,6 +134,15 @@ public class VerificationService {
         Tx.inTransaction(conn -> record(conn, cardNo, donorId, staffId, result, detail));
     }
 
+    /**
+     * Severs a deleted donor from their audit rows without removing any of
+     * them, joining the caller's transaction. See
+     * {@link VerificationLogDao#detachDonor}.
+     */
+    public int detachDonor(Connection conn, long donorId) {
+        return logDao.detachDonor(conn, donorId);
+    }
+
     // ---- audit trail queries ------------------------------------------------
 
     public List<VerificationLog> recentAttempts(int limit) {

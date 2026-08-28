@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="${ctx}/assets/css/bdcms.css">
   <link rel="icon" href="${ctx}/assets/img/favicon.svg" type="image/svg+xml">
 </head>
-<body class="bdcms">
+<body class="bdcms" data-ctx="${ctx}">
 
 <c:if test="${not empty currentUser}">
   <nav class="bdcms-navbar">

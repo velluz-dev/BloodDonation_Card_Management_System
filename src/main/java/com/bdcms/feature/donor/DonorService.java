@@ -155,6 +155,27 @@ public class DonorService {
         return errors;
     }
 
+    /**
+     * Loads a donor inside a caller's transaction.
+     *
+     * <p>Needed so the admin feature can read a donor and delete them in one
+     * unit of work, rather than checking and then acting on stale information.
+     */
+    public Optional<Donor> findById(java.sql.Connection conn, long donorId) {
+        return donorDao.findById(conn, donorId);
+    }
+
+    /**
+     * Deletes a donor row, joining the caller's transaction.
+     *
+     * <p>Intentionally not exposed as a standalone operation: rows in other
+     * features' tables reference a donor, and clearing them is the admin
+     * feature's job. Calling this on its own would fail on a foreign key.
+     */
+    public int delete(java.sql.Connection conn, long donorId) {
+        return donorDao.delete(conn, donorId);
+    }
+
     /** Sets or clears the optional verification PIN. Passing null clears it. */
     public void setPin(long donorId, String plainPin) {
         String hash = (plainPin == null || plainPin.isBlank()) ? null : Passwords.hash(plainPin);

@@ -17,11 +17,12 @@ BloodDonation_Card_Management_System/
 │   ├── shared/                  ← Careful: everyone depends on this
 │   └── feature/                 ← Your feature lives here
 │
-├── src/main/webapp/             ← Web pages (JSP), CSS, JavaScript, images
+├── src/main/webapp/             ← Web pages (JSP), CSS, JavaScript, fonts
 ├── src/main/resources/          ← Config files
 ├── src/test/java/               ← Unit tests
 ├── db/                          ← Database scripts
-├── docs/                        ← Diagrams and test results
+├── docs/                        ← Diagrams, test results, the 3D card
+├── scripts/                     ← smoke-test.ps1, the end-to-end suite
 ├── target/                      ← Build output. Never touch, never commit.
 └── (root files)                 ← Build config and documentation
 ```
@@ -37,17 +38,22 @@ BloodDonation_Card_Management_System/
 | `src/main/webapp/WEB-INF/web.xml` | Filters, session timeout, error pages | **Ask first** |
 | `src/main/webapp/assets/css/bdcms.css` | Our own styles | **Yes**, add at the bottom |
 | `src/main/webapp/assets/js/bdcms.js` | Our own JavaScript | **Yes** |
-| `src/main/webapp/assets/vendor/` | Bootstrap 5.3, downloaded | **No** — third-party |
+| `src/main/webapp/assets/js/bdcms-scanner.js` | Webcam QR scanning for the card field | **Yes** |
+| `src/main/webapp/assets/fonts/` | Archivo + Roboto Mono, self-hosted | **No** — third-party |
+| `src/main/webapp/assets/vendor/` | Bootstrap 5.3 and jsQR, downloaded | **No** — third-party |
 | `src/main/resources/db.properties` | Database host, port, password | **Yes, locally** — but see the warning in Part 2 |
 | `src/main/resources/app.properties` | Upload folder, photo size limit, BCrypt cost | Rarely |
 | `src/test/java/com/bdcms/` | JUnit tests, mirroring the main package layout | **Yes** — add tests for your feature |
 | `db/01_schema.sql` | Table definitions | **Ask first** — a schema change affects everyone |
 | `db/02_seed.sql` | Demo data: 3 staff, 5 donors, 6 cards, 7 donations | **Ask first** |
 | `docs/` | ER diagram, test evidence | Yes, when you have something to record |
+| `docs/card-3d/` | The card as a 3D object. A presentation asset, not part of the app | Rarely |
+| `scripts/smoke-test.ps1` | 53 end-to-end checks against a running instance | **Yes** — add a check when you add a feature |
 | `pom.xml` | Dependencies and build plugins | **Ask first** |
 | `mvnw`, `mvnw.cmd`, `.mvn/` | Maven wrapper — downloads Maven for you | **No** |
 | `target/` | Compiled classes and the WAR | **No** — auto-generated, excluded by `.gitignore` |
-| `README.md`, `ARCHITECTURE.md`, `SETUP.md` | Project documentation | Yes, keep them true |
+| `README.md`, `ARCHITECTURE.md`, `SETUP.md`, `USER-MANUAL.md` | Project documentation | Yes, keep them true |
+| `.gitattributes` | Line-ending rules so Windows and macOS agree | **No** |
 
 ### Inside one feature — the pattern
 
@@ -150,6 +156,19 @@ Every demo donor's verification PIN is **`1234`**.
 
 You should see **`Tests run: 106, Failures: 0, Errors: 0`**. If that passes, your JDK and the project are fine even before MySQL is working.
 
+### 7. Check the whole system works
+
+With the app running and the database freshly seeded:
+
+```powershell
+.\scripts\smoke-test.ps1
+```
+
+**53 checks** covering login, CSRF, roles, ID masking, PIN, the eligibility
+boundary, PDF export, the audit trail and administrator deletion. Reseed before
+each run — the suite records a donation and deletes a donor, so a second run
+without reseeding reports failures that are the system behaving correctly.
+
 ---
 
 ## Part 3 — Who edits what
@@ -160,7 +179,7 @@ Fill in the names — the assignment is a suggestion, swap as you like.
 
 | Person | Feature | Java folder | JSP folder |
 |---|---|---|---|
-| Hein Thu | **Shared + integration** | `shared/` | `views/layout/` |
+| Hein Thu | **Shared + integration**<br>plus `dashboard/` and `admin/` | `shared/`<br>`feature/dashboard/`, `feature/admin/` | `views/layout/`<br>`views/dashboard/`, `views/admin/` |
 | *(htarinzali76@)* | **FR-1 Authentication**<br>**FR-7 Reporting** | `feature/auth/`<br>`feature/report/` | `views/auth/`<br>`views/report/` |
 | *(shunnlae1355@)* | **FR-2 Donor registration** | `feature/donor/` | `views/donor/` |
 | *(eoo583226@)* | **FR-3 Card management** | `feature/card/` | `views/card/` |
@@ -197,6 +216,8 @@ So: **shared and donor first**, then card and verification, then donation, then 
 | Change the donation waiting period | **No code.** Sign in as admin → Administration → System Settings |
 | Change how the printed card looks | `card/CardPdfRenderer.java` (the PDF) and `views/card/print.jsp` (the preview) |
 | Change how much of the national ID is hidden | `verification/IdMasker.java` |
+| Change the webcam scanner | `assets/js/bdcms-scanner.js` |
+| Change what an administrator may delete | `feature/admin/DataAdminService.java` |
 | Add a column to a report | `report/ReportDao.java` (the SQL) and `report/ReportService.java` (the headers) |
 | Change colours, spacing, layout | `assets/css/bdcms.css` |
 | Add a menu item | `views/layout/header.jspf` — **tell the team, it affects every page** |

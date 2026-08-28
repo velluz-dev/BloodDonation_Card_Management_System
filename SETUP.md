@@ -134,6 +134,16 @@ To also put every JSP through Jasper (catches broken taglibs and any scriptlet):
 .\mvnw.cmd -P jsp-check clean verify
 ```
 
+Once it is running, the end-to-end suite exercises the whole system over HTTP:
+
+```powershell
+.\scripts\smoke-test.ps1
+```
+
+**53 checks.** Reseed the database first — the suite records a donation and
+deletes a donor, so a second run without reseeding reports failures that are
+the system working correctly.
+
 ---
 
 ## 5. Run
@@ -146,7 +156,10 @@ To also put every JSP through Jasper (catches broken taglibs and any scriptlet):
 
 Cargo downloads Tomcat 10.1.30 on first use, deploys the WAR and starts it.
 
-Open <http://localhost:8080/bdcms> · stop with `Ctrl+C`.
+Open <http://localhost:8081/bdcms> · stop with `Ctrl+C`.
+
+> The port is a Maven property (`cargo.port`, default 8081). Override it with
+> `.\mvnw.cmd cargo:run "-Dcargo.port=9090"` if 8081 is taken.
 
 ### Option B — your own Tomcat 10.1
 
@@ -235,7 +248,7 @@ The URL in `db.properties` already includes `allowPublicKeyRetrieval=true`; make
 **Blank page or `ClassNotFoundException: javax.servlet.*`**
 You are on Tomcat 9 or earlier. This application needs Tomcat 10.1+.
 
-**Port 8080 already in use**
+**Port 8081 already in use**
 The embedded Tomcat port is a property. Override it:
 ```powershell
 .\mvnw.cmd cargo:run "-Dcargo.port=9090"
@@ -247,6 +260,12 @@ The application is still running and holding those files. Stop it with `Ctrl+C` 
 
 **Every page returns 500 but PDFs and images work**
 A JSP is reading a Java **record** as a bean property. Tomcat 10.1 implements Jakarta EL 5.0, which cannot do that — record support arrived in EL 6.0. Add ordinary `getX()` methods to the record; the five records used in views already have them.
+
+**The webcam scan button says the camera needs HTTPS**
+`getUserMedia` only works in a secure context: HTTPS, or the site opened on
+`localhost`. On localhost — how this is normally run — plain HTTP is fine. If
+you reach the app by IP address from another machine over HTTP, the camera will
+not open; type the card number, or put the app behind HTTPS.
 
 **Photographs do not appear**
 They are written to `%USERPROFILE%\bdcms-uploads`. The directory is created at startup; check the Tomcat log line `BDCMS upload directory: ...`. Donors with no photo deliberately show a grey placeholder rather than a broken image.
@@ -260,11 +279,14 @@ Confirm `db/02_seed.sql` ran. `PasswordsTest.seededAdminHashIsValid` asserts tha
 
 ```
 ├── db/                 01_schema.sql · 02_seed.sql
-├── docs/               er-diagram.md · test-evidence.md
+├── docs/               er-diagram.md · test-evidence.md · card-3d/
+├── scripts/            smoke-test.ps1 — 53 end-to-end checks
 ├── src/main/java/      shared/ and feature/    (see ARCHITECTURE.md)
 ├── src/main/resources/ db.properties · app.properties
-├── src/main/webapp/    WEB-INF/views/*  ·  assets/
+├── src/main/webapp/    WEB-INF/views/*  ·  assets/ (css, js, fonts, vendor)
 ├── src/test/java/      106 unit tests, no database required
 ├── ARCHITECTURE.md     how it is built and how the parts connect
+├── TEAM-GUIDE.md       for teammates: folder map, setup, who edits what
+├── USER-MANUAL.md      how to operate the system, by role
 └── pom.xml
 ```

@@ -113,6 +113,25 @@ public class DonationDao {
         }
     }
 
+    /**
+     * How many donations a donor has recorded.
+     *
+     * <p>The guard on deleting a donor: history is append-only, so a donor with
+     * donations cannot be removed without destroying records the eligibility
+     * rule is computed from.
+     */
+    public int countByDonor(Connection conn, long donorId) {
+        String sql = "SELECT COUNT(*) FROM donations WHERE donor_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, donorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            throw new DaoException("Could not count donations for donor " + donorId, e);
+        }
+    }
+
     public int countSince(Connection conn, LocalDate from) {
         String sql = "SELECT COUNT(*) FROM donations WHERE donation_date >= ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {

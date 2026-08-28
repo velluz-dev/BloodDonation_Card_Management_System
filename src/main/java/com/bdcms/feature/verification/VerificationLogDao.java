@@ -94,6 +94,29 @@ public class VerificationLogDao {
     }
 
     /**
+     * Severs the link between a donor and their audit rows, without deleting
+     * any of them.
+     *
+     * <p>Used when an administrator deletes a donor. Every attempt keeps its
+     * card number, outcome, staff account and timestamp - so the trail of what
+     * happened at the counter survives - but it no longer points at a person
+     * who is no longer in the system. {@code donor_id} is nullable precisely so
+     * this is possible.
+     *
+     * <p>This is the only operation in the system that modifies
+     * {@code verification_log}, and it still removes nothing.
+     */
+    public int detachDonor(Connection conn, long donorId) {
+        String sql = "UPDATE verification_log SET donor_id = NULL WHERE donor_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, donorId);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DaoException("Could not detach audit rows for donor " + donorId, e);
+        }
+    }
+
+    /**
      * How many attempts ended in each outcome over a period.
      *
      * <p>Every {@link VerificationResult} appears, including the ones with no

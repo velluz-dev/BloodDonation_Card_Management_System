@@ -1288,3 +1288,58 @@ body.bdcms > main {
         page-break-inside: avoid;
     }
 }
+
+/* ---- webcam card scanner ---------------------------------------------------- */
+
+/* Sits inside the dark scan bar, so it wears the on-ink palette rather than the
+   page palette. */
+.bdcms-scanbar .bdcms-scan-btn {
+    height: 48px;
+    border-color: rgba(239, 235, 227, .28);
+    color: rgba(239, 235, 227, .8);
+    white-space: nowrap;
+}
+
+.bdcms-scanbar .bdcms-scan-btn:hover {
+    border-color: rgba(239, 235, 227, .6);
+    color: #fff;
+}
+
+.bdcms-scan-panel {
+    margin-top: 14px;
+    background: var(--bd-ink);
+    border-radius: var(--bd-r-lg);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Capped so the preview never dominates the screen — the operator is looking at
+   the donor and the card, not at themselves. */
+.bdcms-scan-panel video {
+    width: 100%;
+    max-width: 420px;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--bd-r);
+    background: #000;
+    display: block;
+}
+
+.bdcms-scan-status {
+    font: 400 12.5px/1.5 var(--bd-sans);
+    color: rgba(239, 235, 227, .7);
+    text-align: center;
+}
+
+.bdcms-scan-good {
+    color: #7FD0A4;
+    font-family: var(--bd-mono);
+    font-weight: 500;
+}
+
+.bdcms-scan-bad {
+    color: var(--bd-crimson-light);
+}

@@ -204,6 +204,24 @@ public class DonorDao {
         }
     }
 
+    /**
+     * Removes a donor row.
+     *
+     * <p>Only ever called by the admin feature, and only after it has checked
+     * that the donor has no donations and cleared the rows that reference them.
+     * This DAO deliberately does not do that checking itself: it owns the
+     * {@code donors} table and nothing else.
+     */
+    public int delete(Connection conn, long donorId) {
+        String sql = "DELETE FROM donors WHERE donor_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, donorId);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DaoException("Could not delete donor " + donorId, e);
+        }
+    }
+
     public int countAll(Connection conn) {
         String sql = "SELECT COUNT(*) FROM donors";
         try (PreparedStatement ps = conn.prepareStatement(sql);

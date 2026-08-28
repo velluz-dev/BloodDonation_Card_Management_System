@@ -158,6 +158,11 @@ public class DonationService {
         return Tx.read(conn -> donationDao.findByDonor(conn, donorId));
     }
 
+    /** How many donations a donor has, joining the caller's transaction. */
+    public int countForDonor(Connection conn, long donorId) {
+        return donationDao.countByDonor(conn, donorId);
+    }
+
     public List<Donation> recent(int limit) {
         return Tx.read(conn -> donationDao.findRecent(conn, limit));
     }

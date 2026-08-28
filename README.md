@@ -24,6 +24,8 @@ Donation centres keep donor records in isolation. Three consequences follow, and
 
 Java · Jakarta EE 10 (Servlets 6.0, JSP 3.1, JSTL 3.0) · JDBC + DAO · HikariCP · MySQL 8.0 · Tomcat 10.1 · Maven · Bootstrap 5.3 · ZXing (QR) · jBCrypt · OpenPDF · JUnit 5
 
+The interface follows a bespoke design system — Archivo and Roboto Mono, a bone/ink/crimson palette — built from the approved mockups. Bootstrap, the fonts and the QR decoder are all **bundled locally**, so the system runs with no internet connection.
+
 Core Jakarta EE — Option A of the proposal — so servlets, JSP and JDBC are visible in the submitted code rather than hidden behind a framework's auto-configuration.
 
 ---
@@ -33,13 +35,17 @@ Core Jakarta EE — Option A of the proposal — so servlets, JSP and JDBC are v
 You need a **JDK** and **MySQL 8.0**. Maven and Tomcat are downloaded automatically.
 
 ```powershell
-# 1. create and seed the database
+# 1. clone
+git clone https://github.com/velluzHTA-dev/BloodDonation_Card_Management_System.git
+cd BloodDonation_Card_Management_System
+
+# 2. create and seed the database
 mysql -u root -p < db/01_schema.sql
 mysql -u root -p < db/02_seed.sql
 
-# 2. set your MySQL host/port/password in src/main/resources/db.properties
+# 3. set your MySQL host/port/password in src/main/resources/db.properties
 
-# 3. build and run
+# 4. build and run
 .\mvnw.cmd clean package cargo:run
 ```
 
@@ -63,7 +69,12 @@ Full instructions, a guided walkthrough of every feature, and troubleshooting: *
 | FR-6 | Donation Records | Appended only after verification and eligibility both pass, in a single transaction; full chronological history per donor |
 | FR-7 | Reporting | Donations by date range, blood-group distribution, donor activity — each exportable to PDF |
 
-Plus a dashboard, an administrator settings screen (where the waiting period is edited without a rebuild), staff account management, and the verification audit log.
+Plus:
+
+- a **shift dashboard** with counters, a scan bar and today's blood-group mix
+- **webcam QR scanning** — the browser camera reads the card, on top of the handheld-scanner and type-it-in paths the proposal lists
+- **administrator data management** — delete a donor, guarded so history is never destroyed
+- an administrator **settings** screen (the waiting period, edited without a rebuild), **staff account management**, and the **verification audit log**
 
 ---
 
@@ -98,10 +109,16 @@ The design, the reasoning behind it, and a full request trace: **[ARCHITECTURE.m
 ```
 
 - **106 unit tests**, all passing, none requiring a database
-- **17 JSPs** translated by Jasper — a broken taglib or a stray scriptlet fails the build
+- **18 JSPs** translated by Jasper — a broken taglib or a stray scriptlet fails the build
 - `target/bdcms.war`
 
-Beyond the build, the deployed application was driven over HTTP against real MySQL 8.0.37: **46 end-to-end checks, all passing** — login, CSRF, role enforcement, ID masking, PIN verification, the 84/83-day eligibility boundary, transactional recording, PDF export and the audit trail.
+Then, against a running instance with the database freshly seeded:
+
+```powershell
+.\scripts\smoke-test.ps1
+```
+
+**53 end-to-end checks, all passing** — login, CSRF, role enforcement, ID masking, PIN verification, the 84/83-day eligibility boundary, transactional recording, PDF export, the audit trail, and the guards on administrator deletion.
 
 That live run caught two defects the build could not: Jakarta EL 5.0 cannot read Java **records** as bean properties, and failed verifications were being written to the audit log twice. Both are fixed and documented in **[docs/test-evidence.md](docs/test-evidence.md)**.
 
@@ -117,6 +134,7 @@ That live run caught two defects the build could not: Jakarta EL 5.0 cannot read
 | [SETUP.md](SETUP.md) | Install, build, run, sign in, guided walkthrough, troubleshooting |
 | [docs/er-diagram.md](docs/er-diagram.md) | Schema, constraints, indexes and the invariants enforced in code |
 | [docs/test-evidence.md](docs/test-evidence.md) | Test results and the defects the build caught |
+| [docs/card-3d/](docs/card-3d/) | The donor card as a 3D object — orbit it, export OBJ/GLB. A presentation asset, not part of the app |
 
 ---
 
@@ -126,4 +144,6 @@ That live run caught two defects the build could not: Jakarta EL 5.0 cannot read
   - `donors.pin_hash` is added to the Section 9 schema. Section 10 specifies an optional four-digit PIN as a second factor but the schema had no column for it. It is BCrypt-hashed, never stored in plain text.
   - `maven.compiler.release` targets the installed JDK rather than 17. The code uses no API newer than 17; change the one property in `pom.xml` to build for 17.
 - **Out of scope, as stated in the proposal:** blood inventory, public donor portal, external hospital integration, medical screening, native mobile apps. The web interface is responsive.
-- Bootstrap is **bundled locally** in `src/main/webapp/assets/vendor/`, so the system runs with no internet connection.
+- Bootstrap, the Archivo/Roboto Mono fonts and the jsQR decoder are **bundled locally** under `src/main/webapp/assets/`, so the system runs with no internet connection.
+- **Webcam scanning needs a secure context** — HTTPS, or the site opened on `localhost`. On localhost, where this is demonstrated, plain HTTP is fine. The button says so rather than failing silently, and typing the card number always works.
+- **Myanmar (Burmese) text** stores and displays correctly end to end (`utf8mb4` throughout, verified). It does **not** render in the generated PDFs, which use the built-in Helvetica with WinAnsi encoding — that needs a Myanmar-capable font embedded in `CardPdfRenderer` and `PdfExporter`.

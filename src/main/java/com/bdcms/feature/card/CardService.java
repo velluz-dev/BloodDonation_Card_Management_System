@@ -126,6 +126,11 @@ public class CardService {
                 + MAX_ATTEMPTS + " attempts");
     }
 
+    /** Removes every card a donor holds, joining the caller's transaction. */
+    public int deleteAllForDonor(Connection conn, long donorId) {
+        return cardDao.deleteAllByDonor(conn, donorId);
+    }
+
     /** Marks a card lost. It stops working immediately; the donor's history is untouched. */
     public void reportLost(long cardId) {
         setStatus(cardId, CardStatus.LOST);

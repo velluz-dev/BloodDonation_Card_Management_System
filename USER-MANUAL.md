@@ -18,7 +18,7 @@ part; the reference tables at the end apply to everyone.
 ### The two roles
 
 There are exactly two roles. An administrator can do everything a staff member
-can, plus four things a staff member cannot.
+can, plus five things a staff member cannot.
 
 | Screen | Staff | Administrator |
 |---|:---:|:---:|
@@ -32,6 +32,7 @@ can, plus four things a staff member cannot.
 | **Verification audit log** | ❌ | ✅ |
 | **Staff accounts** | ❌ | ✅ |
 | **System settings** | ❌ | ✅ |
+| **Delete a donor record** | ❌ | ✅ |
 
 A staff member who types an administrator URL directly gets **403 — you do not
 have permission for this page**. The restriction is enforced on the server, not
@@ -138,7 +139,16 @@ card number — a card dropped in the street should not hand a finder an identit
 
 This is the core task. **Verify & record**
 
-**Step 1 — Scan.** Scan the QR code, or type the card number and press Enter.
+**Step 1 — Scan.** Three ways, all equivalent:
+
+- **Handheld scanner** — it types the number and presses Enter by itself.
+- **Webcam** — press **Scan with camera**, hold the card's QR code up to the
+  camera, and the number fills in and submits on its own. The first use asks
+  permission for the camera; allow it once and the browser remembers.
+- **Type it** — the field is always there, and always works.
+
+> The camera needs HTTPS or the site opened on `localhost`. If neither applies,
+> the button says so instead of failing silently — type the number instead.
 
 **Step 2 — Compare.** The stored photograph fills the dark panel on the left.
 Beside it sits the **masked national ID**, for example `S••••567A`.
@@ -242,7 +252,28 @@ you — an audit trail that can be tidied up is not an audit trail.
 Passwords are stored as BCrypt hashes. Nobody — including you — can read an
 existing password. It can only be replaced.
 
-### 3.4 System settings
+### 3.4 Delete a donor record
+
+Open the donor → **Delete donor** on the left, under their photograph.
+
+**When it is allowed.** Only while the donor has **no recorded donations**.
+Donation history is append-only because the eligibility rule is computed from
+it — a donation that happened must stay recorded. If they have donated, the
+deletion is refused and the count shown. Deactivate their card instead if they
+should no longer donate.
+
+**What is removed:** the donor record, every card they hold, and their
+photograph.
+
+**What is kept:** the **verification audit log**. Those rows are not deleted —
+their link to the donor is cleared. Each keeps its card number, outcome, staff
+account and timestamp, so what happened at the counter remains auditable while
+the personal link is gone.
+
+> This cannot be undone. There is no recycle bin, and the confirmation dialog is
+> the only prompt you get.
+
+### 3.5 System settings
 
 **Reports → System settings**
 
@@ -336,6 +367,8 @@ Card numbers are not sequential. Holding one card tells you nothing about any ot
 | **404** | The donor or card does not exist, or an out-of-date link |
 | **500** | Nothing was saved — donation recording is all-or-nothing. Tell an administrator what you were doing |
 | A photograph shows a grey placeholder | No photo was uploaded for that donor. Add one from **Edit details** |
+| The camera will not open | Permission was refused, or the site is not on HTTPS/localhost. Type the card number |
+| A donor cannot be deleted | They have donations. That is intended — history is append-only |
 
 ### Glossary
 
@@ -346,6 +379,7 @@ Card numbers are not sequential. Holding one card tells you nothing about any ot
 | **Masked ID** | `S••••567A` — first character and last four, the rest hidden |
 | **Verification** | Confirming the person presenting the card is its registered owner |
 | **Audit log** | The permanent record of every verification attempt, successful or not |
+| **Detached log entry** | An audit row whose donor was deleted. The event is kept; the link to the person is not |
 | **Interval** | Minimum days between donations. Configurable; 84 by default |
 
 ---

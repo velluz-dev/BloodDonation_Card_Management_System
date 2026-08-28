@@ -9,5 +9,6 @@
 
 <script src="${ctx}/assets/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="${ctx}/assets/js/bdcms.js"></script>
+<script src="${ctx}/assets/js/bdcms-scanner.js"></script>
 </body>
 </html>

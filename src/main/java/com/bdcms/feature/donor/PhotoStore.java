@@ -96,6 +96,29 @@ public final class PhotoStore {
         return resolved.startsWith(root) ? resolved : null;
     }
 
+    /**
+     * Removes a stored photograph from disk.
+     *
+     * <p>Called after a donor row is deleted. Returns quietly if the file is
+     * already gone: the database row is the record that matters, and a missing
+     * file must not turn a completed deletion into an error.
+     */
+    public static boolean delete(String relativePath) {
+        Path file = resolve(relativePath);
+        if (file == null) {
+            return false;
+        }
+        try {
+            return Files.deleteIfExists(file);
+        } catch (IOException e) {
+            // Worth knowing about - an orphaned image of a deleted donor is a
+            // privacy matter - but not worth failing the deletion over.
+            System.getLogger(PhotoStore.class.getName()).log(System.Logger.Level.WARNING,
+                    "Could not delete photograph " + relativePath, e);
+            return false;
+        }
+    }
+
     /** Content type to serve a stored photo with, derived from its extension. */
     public static String contentTypeOf(String relativePath) {
         return relativePath != null && relativePath.toLowerCase(Locale.ROOT).endsWith(".png")

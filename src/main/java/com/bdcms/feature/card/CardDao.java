@@ -124,6 +124,23 @@ public class CardDao {
         }
     }
 
+    /**
+     * Removes every card belonging to a donor.
+     *
+     * <p>Part of deleting a donor. A card is meaningless without the person it
+     * identifies, and the audit trail records card numbers as text rather than
+     * as a foreign key, so the log stays readable after the rows are gone.
+     */
+    public int deleteAllByDonor(Connection conn, long donorId) {
+        String sql = "DELETE FROM donor_cards WHERE donor_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, donorId);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DaoException("Could not delete cards for donor " + donorId, e);
+        }
+    }
+
     /** How many cards currently sit in a given state. Feeds the dashboard rail. */
     public int countByStatus(Connection conn, CardStatus status) {
         String sql = "SELECT COUNT(*) FROM donor_cards WHERE status = ?";

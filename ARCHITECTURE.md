@@ -200,6 +200,15 @@ Only a genuine fault — a dropped connection, a constraint violation — throws
 | FR-6 | Transactional recording, history | `feature/donation/DonationService`, `shared/db/Tx` |
 | FR-7 | Three reports, PDF | `feature/report/*`, `PdfExporter` |
 
+Two features exist beyond the proposal's seven, both read-only compositions that
+nothing depends on — which is why they can import everything without creating a
+cycle:
+
+| Feature | What it does |
+|---|---|
+| `dashboard` | Shift counters, the scan bar, recent activity, today's blood-group mix |
+| `admin` | Settings, staff accounts, and the one destructive operation in the system |
+
 | NFR | How |
 |---|---|
 | Passwords hashed | `Passwords` (BCrypt cost 12). The only class that sees a plaintext secret |
@@ -231,6 +240,21 @@ Only a genuine fault — a dropped connection, a constraint violation — throws
 
 **Staff accounts are disabled, never deleted** — every donation and verification names the account responsible.
 
+**A donor may be deleted, but only when it costs no history.** `DataAdminService`
+refuses if they have any donations, because the eligibility rule is computed
+from those rows. When it proceeds, the audit trail is *kept*: verification rows
+have their `donor_id` set to null rather than being removed, so every card
+number, outcome, staff account and timestamp survives while the link to a person
+no longer in the system does not. `verification_log.donor_id` is nullable
+precisely so this is possible — it is the only operation in the system that
+writes to that table, and it still deletes nothing.
+
+**Webcam scanning is a convenience, never a control.** `bdcms-scanner.js` only
+fills in the card-number field; the server then verifies the card, the
+photograph, the PIN and eligibility exactly as it does for a typed number. It
+prefers the browser's native `BarcodeDetector` and falls back to a bundled jsQR,
+so it works offline in any browser.
+
 **`EligibilityService` never queries the donations table.** It is handed a date. That is what lets the rule be tested against a hundred boundary dates in milliseconds with no database at all.
 
 ---
@@ -244,7 +268,7 @@ mvnw.cmd -P jsp-check clean verify
 Runs three things:
 
 1. **106 unit tests** — the eligibility rule (boundaries, configurable intervals, future-dated donations), ID masking, card-number format and normalisation, password hashing, input validation, and the transaction contract in `TxTest` (commit on success, rollback on any throw).
-2. **JSP translation** — all 17 views are put through Jasper, the same translator Tomcat uses, so a broken taglib URI or a stray scriptlet fails the build rather than surfacing when someone opens the page.
+2. **JSP translation** — all 18 views are put through Jasper, the same translator Tomcat uses, so a broken taglib URI or a stray scriptlet fails the build rather than surfacing when someone opens the page.
 3. **WAR packaging** — `target/bdcms.war`.
 
 The JSP check was confirmed to actually fail: adding `<% int x = 1+1; %>` to a view produced

@@ -114,7 +114,7 @@ National ID formats, phone formats, 4-digit PINs, donor age bounds (16–70, plu
 
 ---
 
-## 3. JSP translation — 17 views, 0 errors
+## 3. JSP translation — 18 views, 0 errors
 
 Every JSP is put through Jasper, the same translator Tomcat uses, so a broken taglib URI or a stray scriptlet fails the build rather than surfacing when a user opens the page.
 
@@ -169,9 +169,21 @@ The scriptlet was removed and the build returned to green. Java code cannot be c
 
 ---
 
-## 5. Live end-to-end run — 46 checks, all passing
+## 5. Live end-to-end run — 53 checks, all passing
 
-The application was deployed to embedded Tomcat 10.1.30 against a real MySQL 8.0.37 instance and driven over HTTP: log in, look up cards, confirm identity, record donations, export PDFs, read the audit log.
+The application was deployed to embedded Tomcat 10.1.30 against a real MySQL
+8.0.37 instance and driven over HTTP: log in, look up cards, confirm identity,
+record donations, export PDFs, read the audit log, and exercise the guards on
+administrator deletion.
+
+The suite lives in the repository at [`scripts/smoke-test.ps1`](../scripts/smoke-test.ps1)
+and is re-runnable:
+
+```powershell
+mysql ... < db/01_schema.sql
+mysql ... < db/02_seed.sql
+.\scripts\smoke-test.ps1
+```
 
 ```
 === 1.  Access control ===          anonymous redirect, destination preserved
@@ -187,9 +199,13 @@ The application was deployed to embedded Tomcat 10.1.30 against a real MySQL 8.0
 === 8.  Cards (FR-3) ===            reissue trail, QR PNG, card PDF, photo servlet
 === 9.  Reports (FR-7) ===          all three render and export to PDF
 === 10. Audit and settings ===      success and failure rows present
-=== 11. Roles (FR-1) ===            STAFF gets 403 on /app/admin, no admin menu
+=== 11. Admin data management ===   delete control admin-only; donor with
+                                    donations refused; CSRF enforced;
+                                    a GET never deletes
+=== 12. Roles (FR-1) ===            STAFF gets 403 on /app/admin, no admin menu,
+                                    no delete control, delete endpoint refused
 
-================  46 passed, 0 failed  ================
+================  53 passed, 0 failed  ================
 ```
 
 ### Two defects only a live run could catch
@@ -237,6 +253,57 @@ After the run, four verification attempts were logged (two successes, two failur
 
 ---
 
+## 6a. Administrator deletion, verified against the database
+
+The claim that deleting a donor **keeps the audit trail** was checked directly
+rather than assumed. A throwaway donor was registered, issued a card, and a
+failed verification recorded against them, producing an audit row carrying their
+`donor_id`. After deletion:
+
+```
++--------+-------------------+----------+---------------+----------+---------------------+
+| log_id | card_no           | donor_id | result        | staff_id | attempted_at        |
++--------+-------------------+----------+---------------+----------+---------------------+
+|      4 | BDC-2026-JSXG77PT |     NULL | NOT_CONFIRMED |        1 | 2026-08-28 14:07:36 |
++--------+-------------------+----------+---------------+----------+---------------------+
+
+donor_rows = 0   card_rows = 0   audit_rows_total = 4   (unchanged)
+```
+
+The row survived with `donor_id` set to null; the card number, outcome, staff
+account and timestamp are all intact. The guard was checked too: deleting a
+donor with donations is refused, and the donor still exists afterwards.
+
+---
+
+## 6b. Myanmar (Burmese) text
+
+Checked end to end by registering a donor named **ကောင် မြတ်နိုး** through the real
+web form.
+
+| | |
+|---|---|
+| Stored in MySQL, read back byte-identical | ✅ |
+| Displayed correctly in the application | ✅ |
+| Rendered in generated PDFs | ❌ |
+
+The web path is UTF-8 throughout (`utf8mb4` schema, `characterEncoding=UTF-8`,
+`EncodingFilter`) and round-trips correctly. The PDFs do not: inspecting a
+generated card shows only the built-in Type 1 fonts with `WinAnsiEncoding` and
+no embedded font file —
+
+```
+/BaseFont  Courier-Bold, Helvetica, Helvetica-Bold
+/Encoding  WinAnsiEncoding
+/FontFile  none
+```
+
+WinAnsi is a single-byte Latin encoding, so Burmese cannot be represented in it
+at all. Fixing this means embedding a Myanmar-capable TrueType font (Padauk or
+Noto Sans Myanmar) in `CardPdfRenderer` and `PdfExporter`. **Not yet done.**
+
+---
+
 ## 7. Not covered
 
 Stated plainly rather than left implied.
@@ -246,3 +313,8 @@ Stated plainly rather than left implied.
 - **PDF and QR rendering** are verified only as far as content type and non-trivial byte length; nobody has confirmed visually that the card looks right.
 - **Concurrency.** The duplicate-registration race is handled by the `UNIQUE` index and the duplicate-key path in `DonorService`, but no automated concurrent test exercises it.
 - **Session timeout** is configured at 20 minutes and not waited out.
+- **The webcam scanner** cannot be driven from a script: it needs a camera, a
+  permission grant and a physical card. The wiring is verified (the script and
+  the jsQR fallback both serve, and the card field is present on both pages) but
+  the decode path itself has been exercised only by hand.
+- **The 3D card model** renders in a browser; only its asset graph is checked.

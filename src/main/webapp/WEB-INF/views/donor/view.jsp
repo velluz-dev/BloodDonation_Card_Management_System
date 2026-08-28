@@ -44,8 +44,31 @@
             Edit details
           </a>
         </c:if>
+
+        <%-- Deleting donor data is an administrator action, and the server
+             enforces that independently - this only hides the control. --%>
+        <c:if test="${currentUser.admin and not editing}">
+          <form method="post" action="${ctx}/app/admin/donors/delete" class="d-grid m-0"
+                onsubmit="return confirm('Delete ${fn:escapeXml(donor.fullName)} permanently?\n\nTheir cards and photograph are removed. Verification log entries are kept but detached.\n\nThis cannot be undone.');">
+            <input type="hidden" name="_csrf" value="${csrfToken}">
+            <input type="hidden" name="donorId" value="${donor.donorId}">
+            <button type="submit" class="btn btn-quiet"
+                    style="border-color:rgba(176,30,42,.35);color:var(--bd-crimson)">
+              Delete donor
+            </button>
+          </form>
+        </c:if>
       </div>
     </div>
+
+    <c:if test="${currentUser.admin}">
+      <div class="alert alert-info mt-3" style="font-size:12.5px">
+        <strong>Deleting a donor.</strong> Permitted only while they have no
+        recorded donations &mdash; history is append-only, because the
+        eligibility rule is computed from it. Verification log entries are never
+        deleted; they are kept and detached from the record.
+      </div>
+    </c:if>
 
     <div class="card mt-3">
       <div class="card-header bg-white fw-semibold">Verification PIN</div>
