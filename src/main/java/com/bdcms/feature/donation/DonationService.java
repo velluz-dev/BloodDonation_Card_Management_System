@@ -70,6 +70,17 @@ public class DonationService {
      */
     public DonationOutcome record(String cardNo, long staffId, boolean staffConfirmed,
                                   String pin, String centre, int volumeMl, LocalDate donationDate) {
+        return record(cardNo, staffId, staffConfirmed, pin, centre, volumeMl, donationDate, null);
+    }
+
+    /**
+     * As above, carrying the assisted face check's reading into the audit row.
+     * The reading is recorded and never acted on - see
+     * {@link com.bdcms.feature.verification.VerificationService#verify}.
+     */
+    public DonationOutcome record(String cardNo, long staffId, boolean staffConfirmed,
+                                  String pin, String centre, int volumeMl, LocalDate donationDate,
+                                  Double faceDistance) {
 
         if (cardNo == null || cardNo.isBlank()) {
             return DonationOutcome.invalid("A card number is required.");
@@ -93,19 +104,20 @@ public class DonationService {
         // including the log row unwinds, which is correct because nothing
         // happened at all.
         return Tx.inTransaction(conn ->
-                recordInTransaction(conn, cardNo, staffId, staffConfirmed, pin, centre, volumeMl, date));
+                recordInTransaction(conn, cardNo, staffId, staffConfirmed, pin, centre, volumeMl,
+                        date, faceDistance));
     }
 
     /** The whole flow on a single connection. Any exception unwinds every step. */
     private DonationOutcome recordInTransaction(Connection conn, String cardNo, long staffId,
                                                 boolean staffConfirmed, String pin, String centre,
-                                                int volumeMl, LocalDate date) {
+                                                int volumeMl, LocalDate date, Double faceDistance) {
 
         // 1. Identity verification. This resolves the card, checks its status,
         //    the staff confirmation and the PIN, and writes the audit row for
         //    whatever it finds - all on this connection.
         VerificationResult verification =
-                verificationService.verify(conn, cardNo, staffId, staffConfirmed, pin);
+                verificationService.verify(conn, cardNo, staffId, staffConfirmed, pin, faceDistance);
         if (!verification.isSuccess()) {
             return DonationOutcome.verificationFailed(verification,
                     switch (verification) {

@@ -253,8 +253,12 @@
         buttonHost.style.flex = 'none';
         host.appendChild(buttonHost);
 
-        var panelHost = host.parentNode;
-        scanner.attach(buttonHost, panelHost);
+        // The preview belongs INSIDE the scan panel, not underneath it: the
+        // camera is part of starting a donation, and a video that escapes the
+        // panel reads as a separate thing that happened to appear. The scan bar
+        // is a wrapping flex row, so the preview claims a full-width row of its
+        // own within it.
+        scanner.attach(buttonHost, host);
 
         // Release the camera when leaving the page, so the indicator light does
         // not stay on after the operator has moved elsewhere.

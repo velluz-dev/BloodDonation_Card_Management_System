@@ -125,6 +125,16 @@ $noConf = Req '/app/donations/record' 'Post' @{ _csrf=$csrf; cardNo='BDC-2026-4K
                                                 donationDate=(Today) }
 Check 'Unconfirmed identity refused' ($noConf.Content -match 'must confirm the photograph') 'not refused'
 
+'=== 6a. Assisted face check is advisory only ==='
+$vf = Req '/app/verify?cardNo=BDC-2026-3VZ8KA1N'
+Check 'Face check panel present' ($vf.Content -match 'id="faceCheck"') 'panel missing'
+Check '  ...labelled as assistive, not a decision' ($vf.Content -match 'Assistive') 'not labelled'
+# A perfect score must not authorise: no tick, no donation.
+$noTick = Req '/app/donations/record' 'Post' @{ _csrf=(Token $vf.Content); cardNo='BDC-2026-3VZ8KA1N'
+                                                pin='1234'; centre='Central Blood Bank'; volumeMl='450'
+                                                donationDate=(Today); faceScore='0.010' }
+Check '  ...a perfect score does NOT authorise' ($noTick.Content -match 'must confirm the photograph') 'score authorised it!'
+
 '=== 7. Eligibility (FR-5) ==='
 $csrf = Token (Req '/app/verify?cardNo=BDC-2026-9XR3B8VT').Content
 $ne = Req '/app/donations/record' 'Post' @{ _csrf=$csrf; cardNo='BDC-2026-9XR3B8VT'; confirmed='on'

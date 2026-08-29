@@ -1678,3 +1678,98 @@ tr:hover .bd-row-go { color: var(--bd-crimson); }
         page-break-inside: avoid;
     }
 }
+
+/* ---- assisted face check ---------------------------------------------------- */
+
+/* Deliberately quieter than the confirmation box below it. This panel offers an
+   opinion; that one records a decision, and the difference should be visible
+   before either is read. */
+.bdcms-face {
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-r-lg);
+    background: var(--bd-wash);
+    padding: 16px 18px;
+    margin-bottom: 14px;
+}
+
+.bdcms-face-tag {
+    font: 600 10px/1 var(--bd-sans);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--bd-muted);
+    background: var(--bd-line-soft);
+    border-radius: 999px;
+    padding: 5px 9px;
+}
+
+.bdcms-face video {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--bd-r);
+    background: #000;
+    display: block;
+    margin: 0 auto 10px;
+}
+
+.bdcms-face-result {
+    margin-top: 12px;
+    padding: 13px 15px;
+    border-radius: var(--bd-r);
+    border: 1px solid var(--bd-line);
+    background: var(--bd-white);
+}
+
+.bdcms-face-verdict {
+    font: 600 15px/1.2 var(--bd-sans);
+    color: var(--bd-ink);
+}
+
+.bdcms-face-figures {
+    font: 500 12.5px/1 var(--bd-mono);
+    color: var(--bd-muted);
+    margin-top: 6px;
+}
+
+.bdcms-face-note {
+    font: 400 12.5px/1.5 var(--bd-sans);
+    color: var(--bd-text);
+    margin-top: 8px;
+}
+
+/* The bands tint the panel but never the submit button: a strong likeness must
+   not read as permission to proceed. */
+.bdcms-face-strong   { border-color: #C8E6D6; background: var(--bd-green-soft); }
+.bdcms-face-possible { border-color: var(--bd-line); background: var(--bd-wash); }
+.bdcms-face-weak     { border-color: var(--bd-crimson-line); background: var(--bd-crimson-soft); }
+
+.bdcms-face-strong .bdcms-face-verdict { color: var(--bd-green); }
+.bdcms-face-weak   .bdcms-face-verdict { color: var(--bd-crimson); }
+
+.bdcms-face-caveat {
+    font: 400 12px/1.5 var(--bd-sans);
+    color: var(--bd-muted);
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px solid var(--bd-line-soft);
+}
+
+/* The preview when it sits inside the crimson scan panel: it takes a row of
+   its own and wears the on-crimson palette rather than the page palette. */
+.bdcms-scanbar .bdcms-scan-panel {
+    flex-basis: 100%;
+    margin-top: 4px;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .28);
+    box-shadow: none;
+}
+
+.bdcms-scanbar .bdcms-scan-panel video {
+    max-width: 380px;
+    border: 1px solid rgba(255, 255, 255, .3);
+}
+
+.bdcms-scanbar .bdcms-scan-status { color: rgba(255, 255, 255, .85); }
+.bdcms-scanbar .bdcms-scan-good   { color: #8FE3B4; }
+.bdcms-scanbar .bdcms-scan-bad    { color: #FFC2C7; }

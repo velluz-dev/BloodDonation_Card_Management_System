@@ -163,6 +163,22 @@ Beside it sits the **masked national ID**, for example `S••••567A`.
   against it.
 - Check the **card status** reads Active.
 
+**Optional — the face check.** Press **Compare with camera** to have the system
+compare the live camera image with the stored photograph. It reports how alike
+they are: *Strong likeness*, *Possible likeness*, or *Little likeness*.
+
+> **It does not decide anything.** It cannot tick the box for you, it cannot
+> stop you recording a donation, and a strong likeness is not permission to
+> proceed. It is a prompt to look twice. You are still the one who compares the
+> photograph and the document, and your confirmation is what the system records.
+>
+> A poor reading on a genuine donor is common — bad light, a hat, an old
+> photograph. Treat it as a reason to check carefully, never as proof of fraud.
+> If you are unsure, do not confirm, and call your supervisor.
+
+The reading is saved with your confirmation in the audit log, so it is clear
+what you were shown at the time.
+
 **Step 3 — Confirm.** Tick the confirmation box. Read it before you tick it: you
 are recording that you personally checked, and your account is attached to that
 statement permanently.

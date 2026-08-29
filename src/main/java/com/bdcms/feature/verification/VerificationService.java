@@ -92,6 +92,26 @@ public class VerificationService {
      */
     public VerificationResult verify(Connection conn, String cardNo, long staffId,
                                      boolean staffConfirmed, String submittedPin) {
+        return verify(conn, cardNo, staffId, staffConfirmed, submittedPin, null);
+    }
+
+    /**
+     * As above, additionally recording what the assisted face check reported.
+     *
+     * <p><strong>{@code faceDistance} is an observation, not evidence.</strong>
+     * It is computed in the operator's browser, so it could be any number a
+     * determined user chose to send. Nothing here branches on it: it is written
+     * into the audit row so the trail shows what the operator was looking at
+     * when they confirmed, and that is its entire purpose. The decision remains
+     * the staff tick, and the accountability remains with the named account
+     * that made it.
+     *
+     * @param faceDistance Euclidean descriptor distance, smaller being more
+     *                     alike, or null when the check was not run
+     */
+    public VerificationResult verify(Connection conn, String cardNo, long staffId,
+                                     boolean staffConfirmed, String submittedPin,
+                                     Double faceDistance) {
 
         VerificationView view = lookup(conn, cardNo);
 
@@ -118,7 +138,8 @@ public class VerificationService {
         return record(conn, view.card().getCardNo(), donorId, staffId,
                 VerificationResult.SUCCESS,
                 "Photograph and masked ID confirmed by staff"
-                        + (view.pinRequired() ? "; PIN verified" : ""));
+                        + (view.pinRequired() ? "; PIN verified" : "")
+                        + faceNote(faceDistance));
     }
 
     /**
@@ -165,6 +186,18 @@ public class VerificationService {
     /** Attempts per outcome over a period, every outcome present even at zero. */
     public java.util.Map<VerificationResult, Integer> outcomeCounts(LocalDate from, LocalDate to) {
         return Tx.read(conn -> logDao.countByResult(conn, from, to));
+    }
+
+    /**
+     * Renders the advisory reading for the audit row, or nothing when the check
+     * was not run. Always marked "advisory" so a later reader cannot mistake it
+     * for something the system relied on.
+     */
+    private String faceNote(Double faceDistance) {
+        if (faceDistance == null) {
+            return "";
+        }
+        return String.format("; face check %.3f (advisory, not relied on)", faceDistance);
     }
 
     private VerificationResult record(Connection conn, String cardNo, Long donorId, long staffId,

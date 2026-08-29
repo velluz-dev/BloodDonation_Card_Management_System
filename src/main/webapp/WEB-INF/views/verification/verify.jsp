@@ -123,7 +123,7 @@
 
         <img src="${ctx}/app/donors/photo?donorId=${view.donor.donorId}"
              alt="Photograph of ${fn:escapeXml(view.donor.fullName)}"
-             class="bdcms-verify-photo">
+             class="bdcms-verify-photo" id="faceStored" crossorigin="anonymous">
 
         <div class="d-flex align-items-baseline justify-content-between gap-2">
           <div class="bdcms-identity-name"><c:out value="${view.donor.fullName}" /></div>
@@ -197,6 +197,39 @@
           <form method="post" action="${ctx}/app/donations/record" novalidate>
             <input type="hidden" name="_csrf" value="${csrfToken}">
             <input type="hidden" name="cardNo" value="${fn:escapeXml(view.card.cardNo)}">
+
+            <%-- Assisted face check. Advisory only: it never ticks the box
+                 below, and the server records its reading without acting on
+                 it. See assets/js/bdcms-face.js. --%>
+            <div class="bdcms-face" id="faceCheck">
+              <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                  <svg class="ic" aria-hidden="true" style="color:var(--bd-crimson)"><use href="#i-camera"/></svg>
+                  <span style="font:600 14px/1 var(--bd-sans)">Face check</span>
+                  <span class="bdcms-face-tag">Assistive &middot; not a decision</span>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-sm btn-quiet" id="faceStart">Compare with camera</button>
+                  <button type="button" class="btn btn-sm btn-quiet" id="faceStop" hidden>Stop camera</button>
+                </div>
+              </div>
+
+              <div id="faceStage" hidden class="mt-3">
+                <video id="faceVideo" playsinline muted></video>
+                <div class="bdcms-scan-status" id="faceStatus"></div>
+              </div>
+
+              <div class="bdcms-face-result" id="faceResult" hidden></div>
+
+              <div class="bdcms-face-caveat">
+                Compares the camera image with the stored photograph and reports how
+                alike they are. It does not decide anything: you must still compare the
+                photograph and the masked ID yourself and tick the box below. The reading
+                is recorded with your confirmation.
+              </div>
+            </div>
+
+            <input type="hidden" name="faceScore" id="faceScore" value="">
 
             <div class="bdcms-confirm-box mb-3">
               <div class="form-check d-flex gap-2">

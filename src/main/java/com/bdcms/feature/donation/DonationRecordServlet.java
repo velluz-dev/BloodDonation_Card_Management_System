@@ -40,7 +40,8 @@ public class DonationRecordServlet extends BaseServlet {
         LocalDate donationDate = dateParam(request, "donationDate").orElse(LocalDate.now());
 
         DonationOutcome outcome = donationService.record(
-                cardNo, staff.userId(), confirmed, pin, centre, volumeMl, donationDate);
+                cardNo, staff.userId(), confirmed, pin, centre, volumeMl, donationDate,
+                faceDistance(request));
 
         if (outcome.isRecorded()) {
             Flash.success(request, "Donation recorded for "
@@ -69,6 +70,30 @@ public class DonationRecordServlet extends BaseServlet {
                 ? HttpServletResponse.SC_CONFLICT
                 : HttpServletResponse.SC_BAD_REQUEST);
         render(request, response, "verification/verify.jsp");
+    }
+
+    /**
+     * The assisted face check's reading, if it ran.
+     *
+     * <p>Client-supplied and therefore untrusted: it is validated only enough
+     * to keep rubbish out of the audit row, and is never used to decide
+     * anything. A value outside the range a descriptor distance can actually
+     * take is discarded rather than recorded, because a logged number that
+     * cannot be real is worse than no number.
+     */
+    private Double faceDistance(HttpServletRequest request) {
+        String raw = param(request, "faceScore");
+        if (raw == null) {
+            return null;
+        }
+        try {
+            double value = Double.parseDouble(raw);
+            // Euclidean distance between two normalised 128-d descriptors.
+            // Anything beyond this did not come from the model.
+            return (value >= 0d && value <= 2d) ? value : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /** A direct GET has no form to act on; send staff to the verification screen. */

@@ -249,6 +249,22 @@ no longer in the system does not. `verification_log.donor_id` is nullable
 precisely so this is possible — it is the only operation in the system that
 writes to that table, and it still deletes nothing.
 
+**The face check is advisory, and the code is arranged so it cannot become
+anything else.** It runs entirely in the browser, so the score is client-supplied
+and therefore untrusted; `DonationRecordServlet` validates it only enough to keep
+impossible values out of the audit row, and nothing anywhere branches on it.
+`VerificationService` writes it into `verification_log.detail` marked *"advisory,
+not relied on"*, so a later reader cannot mistake it for something the system
+depended on. Three checks in the suite hold that line: a poor score still records
+when staff confirm, a perfect score is still refused when they do not, and a
+value outside the range a descriptor distance can take is discarded rather than
+logged.
+
+The reason for that restraint: a model that says "87% match" quietly moves the
+decision onto a threshold nobody set, and when it is wrong the accountability
+becomes hard to locate. Here one named person ticks a box, and the log records
+who, when, and what they were shown.
+
 **Webcam scanning is a convenience, never a control.** `bdcms-scanner.js` only
 fills in the card-number field; the server then verifies the card, the
 photograph, the PIN and eligibility exactly as it does for a typed number. It
