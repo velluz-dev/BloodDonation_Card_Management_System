@@ -285,7 +285,8 @@ web form.
 |---|---|
 | Stored in MySQL, read back byte-identical | ✅ |
 | Displayed correctly in the application | ✅ |
-| Rendered in generated PDFs | ❌ |
+| Glyphs present in generated PDFs | ✅ (since the Padauk embed) |
+| Correct syllable stacking in PDFs | ⚠️ not guaranteed — see below |
 
 The web path is UTF-8 throughout (`utf8mb4` schema, `characterEncoding=UTF-8`,
 `EncodingFilter`) and round-trips correctly. The PDFs do not: inspecting a
@@ -298,9 +299,29 @@ no embedded font file —
 /FontFile  none
 ```
 
-WinAnsi is a single-byte Latin encoding, so Burmese cannot be represented in it
-at all. Fixing this means embedding a Myanmar-capable TrueType font (Padauk or
-Noto Sans Myanmar) in `CardPdfRenderer` and `PdfExporter`. **Not yet done.**
+WinAnsi is a single-byte Latin encoding, so Burmese could not be represented in
+it at all.
+
+**Fixed.** `shared/pdf/PdfFonts` embeds Padauk (SIL Open Font License) and picks
+it per string: a value containing Myanmar characters gets the embedded face with
+`Identity-H`; everything else keeps Helvetica, so Latin cards and reports look
+exactly as designed. Re-inspecting a card generated for a Burmese-named donor:
+
+```
+/BaseFont  Courier-Bold, Helvetica, Helvetica-Bold, XPNWBP+Padauk-Regular
+/Encoding  Identity-H, WinAnsiEncoding
+/FontFile2 present — TrueType subset embedded
+```
+
+The card PDF grew from 5.3 KB to 9.4 KB, which is the embedded subset.
+
+**The remaining caveat, stated plainly.** OpenPDF has no complex-text shaping
+engine. Burmese needs one: several signs are stored after the consonant they
+attach to but drawn before it, and a shaper performs that reordering. Embedding
+the font makes the glyphs present and selectable rather than missing — a real
+improvement over blanks — but it does not guarantee every multi-part syllable
+stacks the way a native reader expects. Verifying that requires a human reading
+the output, not a script.
 
 ---
 

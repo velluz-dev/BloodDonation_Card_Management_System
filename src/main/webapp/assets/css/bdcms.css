@@ -66,6 +66,56 @@
     src: url('../fonts/robotomono-500.woff2') format('woff2');
 }
 
+/* ---- Myanmar (Burmese) coverage --------------------------------------------
+
+   Archivo and Roboto Mono have no Myanmar glyphs, so a Burmese donor name would
+   fall back to whatever the operating system happens to have - a different
+   typeface at best, tofu boxes on a machine with no Myanmar font at all.
+
+   Padauk is registered under the SAME family names, restricted by
+   unicode-range to the Myanmar blocks. Two consequences, both wanted:
+
+     - No font stack changes. Latin still resolves to Archivo; only characters
+       in these ranges resolve to Padauk, per character, automatically.
+     - The browser downloads these files only when Myanmar text is actually on
+       the page. An all-Latin screen pays nothing.
+
+   Padauk is also what the generated PDFs embed, so print and screen agree.
+   Unlike the PDFs, the browser shapes Burmese properly - it has a real
+   shaping engine, which OpenPDF does not.                                    */
+
+@font-face {
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url('../fonts/padauk-myanmar-400.woff2') format('woff2');
+    unicode-range: U+1000-109F, U+200C-200D, U+25CC, U+A92E, U+A9E0-A9FE,
+                   U+AA60-AA7F, U+116D0-116E3;
+}
+
+@font-face {
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 600 700;
+    font-display: swap;
+    src: url('../fonts/padauk-myanmar-700.woff2') format('woff2');
+    unicode-range: U+1000-109F, U+200C-200D, U+25CC, U+A92E, U+A9E0-A9FE,
+                   U+AA60-AA7F, U+116D0-116E3;
+}
+
+/* The same, for anywhere a name lands in a monospaced column. Padauk is not
+   monospaced, but a readable name beats a row of boxes. */
+@font-face {
+    font-family: 'Roboto Mono';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url('../fonts/padauk-myanmar-400.woff2') format('woff2');
+    unicode-range: U+1000-109F, U+200C-200D, U+25CC, U+A92E, U+A9E0-A9FE,
+                   U+AA60-AA7F, U+116D0-116E3;
+}
+
 /* ---- tokens ---------------------------------------------------------------- */
 
 :root {

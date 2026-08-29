@@ -2,6 +2,7 @@ package com.bdcms.feature.card;
 
 import com.bdcms.feature.donor.Donor;
 import com.bdcms.feature.donor.PhotoStore;
+import com.bdcms.shared.pdf.PdfFonts;
 import com.bdcms.shared.config.AppConfig;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
@@ -124,7 +125,12 @@ public final class CardPdfRenderer {
         PdfPTable inner = new PdfPTable(1);
         inner.setWidthPercentage(100);
         inner.addCell(borderless(new Phrase("DONOR NAME", labelFont)));
-        inner.addCell(borderless(new Phrase(donor.getFullName(), valueFont)));
+        // The donor's name is the one field on the card that can carry a
+        // non-Latin script, so it picks its own font. Everything else stays
+        // Helvetica, and the card looks exactly as designed for Latin names.
+        inner.addCell(borderless(new Phrase(donor.getFullName(),
+                PdfFonts.forText(donor.getFullName(), FontFactory.HELVETICA_BOLD,
+                        8f, com.lowagie.text.Font.NORMAL, Color.BLACK))));
         inner.addCell(borderless(new Phrase("BLOOD GROUP", labelFont)));
         inner.addCell(borderless(new Phrase(
                 donor.getBloodGroup() == null ? "-" : donor.getBloodGroup().getLabel(), groupFont)));

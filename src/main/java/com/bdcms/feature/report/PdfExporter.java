@@ -1,6 +1,7 @@
 package com.bdcms.feature.report;
 
 import com.bdcms.shared.config.AppConfig;
+import com.bdcms.shared.pdf.PdfFonts;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
@@ -77,7 +78,13 @@ public final class PdfExporter {
         boolean shaded = false;
         for (ReportRow row : report.rows()) {
             for (int i = 0; i < report.headers().size(); i++) {
-                PdfPCell cell = new PdfPCell(new Phrase(row.cell(i), cellFont));
+                // Any cell may hold a donor name, so each picks its own font.
+                // Latin cells keep Helvetica; only the ones that need the
+                // embedded Unicode face pay for it.
+                String value = row.cell(i);
+                PdfPCell cell = new PdfPCell(new Phrase(value,
+                        PdfFonts.forText(value, FontFactory.HELVETICA, 8.5f,
+                                com.lowagie.text.Font.NORMAL, Color.BLACK)));
                 cell.setPadding(4f);
                 cell.setBorderColor(new Color(0xDD, 0xDD, 0xDD));
                 if (shaded) {

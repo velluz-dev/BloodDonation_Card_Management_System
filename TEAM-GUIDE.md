@@ -40,6 +40,7 @@ BloodDonation_Card_Management_System/
 | `src/main/webapp/assets/js/bdcms.js` | Our own JavaScript | **Yes** |
 | `src/main/webapp/assets/js/bdcms-scanner.js` | Webcam QR scanning for the card field | **Yes** |
 | `src/main/webapp/assets/fonts/` | Archivo + Roboto Mono, self-hosted | **No** — third-party |
+| `src/main/resources/fonts/` | Padauk, embedded into generated PDFs | **No** — third-party |
 | `src/main/webapp/assets/vendor/` | Bootstrap 5.3 and jsQR, downloaded | **No** — third-party |
 | `src/main/resources/db.properties` | Database host, port, password | **Yes, locally** — but see the warning in Part 2 |
 | `src/main/resources/app.properties` | Upload folder, photo size limit, BCrypt cost | Rarely |
@@ -218,6 +219,9 @@ So: **shared and donor first**, then card and verification, then donation, then 
 | Change how the printed card looks | `card/CardPdfRenderer.java` (the PDF) and `views/card/print.jsp` (the preview) |
 | Change how much of the national ID is hidden | `verification/IdMasker.java` |
 | Change the webcam scanner | `assets/js/bdcms-scanner.js` |
+| Change the sidebar or top bar | `views/layout/header.jspf` |
+| Add an icon | `views/layout/icons.jspf`, then `<use href="#i-yourname"/>` |
+| Change how PDFs pick fonts | `shared/pdf/PdfFonts.java` |
 | Change what an administrator may delete | `feature/admin/DataAdminService.java` |
 | Add a column to a report | `report/ReportDao.java` (the SQL) and `report/ReportService.java` (the headers) |
 | Change colours, spacing, layout | `assets/css/bdcms.css` |
@@ -234,6 +238,44 @@ Copy the pattern, do not invent a new one:
 4. Extend `BaseServlet` — you get `render()`, `redirect()`, `currentUser()` and parameter helpers free
 5. JSPs go in `src/main/webapp/WEB-INF/views/yourfeature/`
 6. Tests go in `src/test/java/com/bdcms/feature/yourfeature/`
+
+---
+
+## Part 3a — ⚠️ Read this before you push existing work
+
+**The interface was rebuilt.** If your branch was cut before that, you will hit
+conflicts. Pull and rebase *before* you write any more code:
+
+```powershell
+git checkout main
+git pull
+git checkout your-branch
+git merge main
+```
+
+Expect conflicts in these, because they were rewritten rather than edited:
+
+| File | What changed |
+|---|---|
+| `assets/css/bdcms.css` | Rewritten. New palette, sidebar shell, new component styles |
+| `views/layout/header.jspf` | Rewritten. Top navbar became a left sidebar plus a top bar |
+| `views/layout/footer.jspf` | Rewritten to close the new shell |
+| `views/dashboard/dashboard.jsp` | Rewritten to the new mockup |
+| `views/layout/icons.jspf` | **New.** SVG icon sprite |
+
+**Resolving them:** take *main's* version of these five files, then re-apply your
+own change on top. Do not merge them line by line — the two versions are
+different designs, and interleaving them produces neither.
+
+Class names did **not** change, so if your work was in another view it will
+almost certainly still render correctly. What you may want to add:
+
+- a `topTitle` / `topSub` request attribute for the top bar heading
+- `<svg class="ic"><use href="#i-users"/></svg>` for an icon (see `icons.jspf`)
+
+If your branch adds a **new page**, copy the shell usage from any current view:
+set `pageTitle`, `nav`, and optionally `topTitle` / `topSub`, then include
+`header.jspf` and `footer.jspf` as before.
 
 ---
 
