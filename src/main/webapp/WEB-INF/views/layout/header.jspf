@@ -1,9 +1,15 @@
 <%--
-  Common page opening: document head, navigation and flash messages.
+  Common page opening: document head, sidebar, top bar and flash messages.
 
   Every dynamic value below goes through <c:out> or ${fn:escapeXml(...)}.
   That is the XSS control named in the non-functional requirements - a donor
   name containing markup is rendered as text, never as HTML.
+
+  A page sets three request attributes before including this file:
+    pageTitle   browser tab title, and the fallback top-bar heading
+    nav         which sidebar item is current: dashboard | donors | verify | admin
+    topTitle    optional - the heading shown in the top bar
+    topSub      optional - the line under it
 
   Page directives and taglibs live in taglibs.jspf, which every view includes
   before this one - see the note there for why the ordering matters.
@@ -22,81 +28,126 @@
 </head>
 <body class="bdcms" data-ctx="${ctx}">
 
-<c:if test="${not empty currentUser}">
-  <nav class="bdcms-navbar">
-    <a class="navbar-brand" href="${ctx}/app/dashboard">
-      <span class="bdcms-drop" aria-hidden="true"></span>
-      <span>BDCMS</span>
+<%@ include file="icons.jspf" %>
+
+<div class="bdcms-shell">
+
+  <%-- ---------------- sidebar ---------------- --%>
+  <aside class="bdcms-sidebar">
+    <a class="bdcms-brand" href="${ctx}/app/dashboard">
+      <span class="bdcms-mark" aria-hidden="true"><svg class="ic"><use href="#i-drop"/></svg></span>
+      <span>
+        <span class="bdcms-brand-name d-block">BDCMS</span>
+        <span class="bdcms-brand-sub d-block"><c:out value="${centreName}" default="Central Blood Bank" /></span>
+      </span>
     </a>
 
-    <button class="navbar-toggler d-lg-none border-0 p-0 ms-auto me-2" type="button"
-            data-bs-toggle="collapse" data-bs-target="#mainNav"
-            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <ul class="bdcms-nav">
+      <li>
+        <a class="${nav eq 'dashboard' ? 'active' : ''}" href="${ctx}/app/dashboard">
+          <svg class="ic" aria-hidden="true"><use href="#i-dashboard"/></svg> Dashboard
+        </a>
+      </li>
+      <li>
+        <a class="${nav eq 'donors' ? 'active' : ''}" href="${ctx}/app/donors">
+          <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg> Donors
+        </a>
+      </li>
+      <li>
+        <a class="${nav eq 'verify' ? 'active' : ''}" href="${ctx}/app/verify">
+          <svg class="ic" aria-hidden="true"><use href="#i-verify"/></svg> Verify &amp; record
+        </a>
+      </li>
 
-    <div class="collapse navbar-collapse d-lg-flex" id="mainNav">
-      <ul class="navbar-nav me-auto mb-0">
-        <li class="nav-item">
-          <a class="nav-link ${nav eq 'dashboard' ? 'active' : ''}" href="${ctx}/app/dashboard">Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link ${nav eq 'donors' ? 'active' : ''}" href="${ctx}/app/donors">Donors</a>
-        </li>
-        <%-- The mockup shows a "Cards" tab. There is no cards index in this
-             system: a card is always reached through the donor who holds it,
-             which is the same rule the data model follows. Rather than link to
-             a page that does not exist, the tab is omitted. --%>
-        <li class="nav-item">
-          <a class="nav-link ${nav eq 'verify' ? 'active' : ''}" href="${ctx}/app/verify">Verify &amp; record</a>
-        </li>
-        <c:if test="${currentUser.admin}">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle ${nav eq 'admin' ? 'active' : ''}" href="#"
-               role="button" data-bs-toggle="dropdown" aria-expanded="false">Reports</a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="${ctx}/app/reports">Reports &amp; PDF export</a></li>
-              <li><a class="dropdown-item" href="${ctx}/app/admin/verification-log">Verification audit log</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="${ctx}/app/admin/users">Staff accounts</a></li>
-              <li><a class="dropdown-item" href="${ctx}/app/admin/settings">System settings</a></li>
+      <%-- Reports and the administrative screens are one collapsible group,
+           shown only to administrators. AuthFilter enforces that on the
+           server; hiding the group here is presentation, not access control. --%>
+      <c:if test="${currentUser.admin}">
+        <li>
+          <button type="button" class="bdcms-nav-toggle ${nav eq 'admin' ? 'active' : ''}"
+                  data-bs-toggle="collapse" data-bs-target="#adminNav"
+                  aria-expanded="${nav eq 'admin' ? 'true' : 'false'}" aria-controls="adminNav">
+            <svg class="ic" aria-hidden="true"><use href="#i-report"/></svg> Reports
+            <svg class="ic bdcms-nav-chev" aria-hidden="true"><use href="#i-chev-down"/></svg>
+          </button>
+          <div class="collapse ${nav eq 'admin' ? 'show' : ''}" id="adminNav">
+            <ul class="bdcms-subnav">
+              <li><a class="${sub eq 'reports' ? 'active' : ''}"
+                     href="${ctx}/app/reports">Reports &amp; PDF</a></li>
+              <li><a class="${sub eq 'audit' ? 'active' : ''}"
+                     href="${ctx}/app/admin/verification-log">Verification audit log</a></li>
+              <li><a class="${sub eq 'users' ? 'active' : ''}"
+                     href="${ctx}/app/admin/users">Staff accounts</a></li>
+              <li><a class="${sub eq 'settings' ? 'active' : ''}"
+                     href="${ctx}/app/admin/settings">System settings</a></li>
             </ul>
-          </li>
-        </c:if>
-      </ul>
+          </div>
+        </li>
+      </c:if>
+    </ul>
 
-      <div class="d-flex align-items-center gap-3">
-        <span class="bdcms-navbar-user"><c:out value="${currentUser.fullName}" /></span>
-        <span class="bdcms-role ${currentUser.admin ? 'bdcms-role-admin' : ''}">
-          <c:out value="${currentUser.role}" />
-        </span>
-        <form method="post" action="${ctx}/logout" class="m-0">
-          <input type="hidden" name="_csrf" value="${csrfToken}">
-          <button type="submit" class="btn btn-sm btn-quiet"
-                  style="border-color:rgba(239,235,227,.28);color:rgba(239,235,227,.75)">Sign out</button>
-        </form>
+    <div class="bdcms-sidebar-foot">
+      <div class="bdcms-help">
+        <div class="bdcms-help-title">
+          <svg class="ic" aria-hidden="true"><use href="#i-help"/></svg> Need help?
+        </div>
+        <p>The user manual covers every task, by role.</p>
+        <a class="btn btn-sm btn-outline-danger w-100" href="${ctx}/app/verify">Start a donation</a>
+      </div>
+      <div class="bdcms-copyright">
+        &copy; 2026 <c:out value="${centreName}" default="Central Blood Bank" />
       </div>
     </div>
-  </nav>
-</c:if>
+  </aside>
 
-<main class="container-fluid py-4 px-lg-4">
+  <%-- ---------------- main ---------------- --%>
+  <div class="bdcms-main">
 
-  <c:if test="${not empty flashSuccess}">
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <c:out value="${flashSuccess}" />
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  </c:if>
-  <c:if test="${not empty flashError}">
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <c:out value="${flashError}" />
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  </c:if>
-  <c:if test="${not empty errorMessage}">
-    <div class="alert alert-danger" role="alert"><c:out value="${errorMessage}" /></div>
-  </c:if>
-  <c:if test="${not empty infoMessage}">
-    <div class="alert alert-info" role="alert"><c:out value="${infoMessage}" /></div>
-  </c:if>
+    <header class="bdcms-topbar">
+      <div>
+        <h1 class="bdcms-topbar-title">
+          <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
+          <c:out value="${topTitle}" default="${pageTitle}" />
+        </h1>
+        <c:if test="${not empty topSub}">
+          <p class="bdcms-topbar-sub"><c:out value="${topSub}" /></p>
+        </c:if>
+      </div>
+
+      <div class="bdcms-topbar-actions">
+        <div class="bdcms-userchip">
+          <svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>
+          <span class="bdcms-userchip-name"><c:out value="${currentUser.fullName}" /></span>
+          <span class="bdcms-role ${currentUser.admin ? 'bdcms-role-admin' : ''}">
+            <c:out value="${currentUser.role}" />
+          </span>
+        </div>
+        <form method="post" action="${ctx}/logout" class="m-0">
+          <input type="hidden" name="_csrf" value="${csrfToken}">
+          <button type="submit" class="btn btn-outline-secondary">
+            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-signout"/></svg> Sign out
+          </button>
+        </form>
+      </div>
+    </header>
+
+    <main class="bdcms-content">
+
+      <c:if test="${not empty flashSuccess}">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <c:out value="${flashSuccess}" />
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </c:if>
+      <c:if test="${not empty flashError}">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <c:out value="${flashError}" />
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </c:if>
+      <c:if test="${not empty errorMessage}">
+        <div class="alert alert-danger" role="alert"><c:out value="${errorMessage}" /></div>
+      </c:if>
+      <c:if test="${not empty infoMessage}">
+        <div class="alert alert-info" role="alert"><c:out value="${infoMessage}" /></div>
+      </c:if>

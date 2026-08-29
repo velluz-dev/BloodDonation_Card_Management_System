@@ -27,6 +27,9 @@ public abstract class BaseServlet extends HttpServlet {
         request.setAttribute("currentUser", SessionUser.from(request));
         // ISO today, for pre-filling and bounding <input type="date"> fields.
         request.setAttribute("today", LocalDate.now().toString());
+        // The sidebar shows the centre name on every page, so it is exposed here
+        // rather than by each servlet that happens to render a shell.
+        request.setAttribute("centreName", com.bdcms.shared.config.AppConfig.defaultCentre());
         // Wall-clock time, for the "looked up at" stamp on the verification screen.
         request.setAttribute("nowTime", java.time.LocalTime.now()
                 .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")));
