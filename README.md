@@ -77,6 +77,7 @@ Plus:
 - **assisted face check** — compares the live camera image with the stored photograph and reports a likeness. Strictly advisory: it cannot tick the confirmation, cannot block a donation, and is recorded in the audit trail rather than acted on
 - **administrator data management** — delete a donor, guarded so history is never destroyed
 - an administrator **settings** screen (the waiting period, edited without a rebuild), **staff account management**, and the **verification audit log**
+- **English and Burmese throughout** — every screen, flash message, validation error, generated card and PDF report. A switcher in the top bar changes language in place, keeping you on the page and filter you were on
 
 ---
 

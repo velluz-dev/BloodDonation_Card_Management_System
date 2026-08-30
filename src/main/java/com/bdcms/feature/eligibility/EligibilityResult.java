@@ -42,6 +42,44 @@ public record EligibilityResult(
     }
 
     /** Sentence shown on the verification screen and written into the donation record. */
+    /**
+     * Bundle key for the sentence explaining this verdict.
+     *
+     * <p>Paired with {@link #getExplanationArgs()}, which supplies the same five
+     * values in the same order to all three messages. A message uses the subset
+     * it needs and MessageFormat ignores the rest, which is what lets a JSP
+     * render any verdict with one block and no {@code <c:choose>} - the "no
+     * business logic in JSP pages" rule applies to picking a sentence just as
+     * much as to picking a donor.
+     */
+    public String getExplanationKey() {
+        if (isFirstDonation()) {
+            return "eligibility.explain.first";
+        }
+        return isEligible() ? "eligibility.explain.eligible"
+                            : "eligibility.explain.notEligible";
+    }
+
+    /**
+     * Values for {@link #getExplanationKey()}, always in this order:
+     * {@code {0}} days since, {@code {1}} last donation, {@code {2}} required
+     * interval, {@code {3}} next eligible date, {@code {4}} days remaining.
+     */
+    public Object[] getExplanationArgs() {
+        return new Object[] {
+                daysSinceLast, lastDonationDate, intervalDays,
+                nextEligibleDate, getDaysRemaining()
+        };
+    }
+
+    /**
+     * The English sentence, for logs and for the audit detail column.
+     *
+     * <p>Deliberately not translated: a log line is read by whoever is on call,
+     * and an audit row is evidence that should read the same to every reviewer
+     * regardless of the language the operator happened to have selected.
+     * Screens use {@link #getExplanationKey()} instead.
+     */
     public String getExplanation() {
         if (isFirstDonation()) {
             return "First recorded donation - no waiting period applies.";

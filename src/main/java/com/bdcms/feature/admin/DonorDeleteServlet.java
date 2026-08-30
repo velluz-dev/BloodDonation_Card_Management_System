@@ -43,22 +43,23 @@ public class DonorDeleteServlet extends BaseServlet {
 
         switch (outcome.getStatus()) {
             case DELETED -> {
-                Flash.success(request, "Donor " + outcome.getDonorName() + " deleted, along with "
-                        + outcome.getCardsRemoved() + " card(s). "
-                        + outcome.getAuditRowsKept() + " verification log entr"
-                        + (outcome.getAuditRowsKept() == 1 ? "y was" : "ies were")
-                        + " kept and detached from the record.");
+                // The English singular/plural of "entry/entries" used to be
+                // spliced in here. Burmese does not inflect for number, so the
+                // whole sentence now comes from the bundle and each language
+                // handles its own agreement.
+                Flash.success(request, msg(request, "flash.donorDeleted",
+                        outcome.getDonorName(),
+                        outcome.getCardsRemoved(),
+                        outcome.getAuditRowsKept()));
                 redirect(request, response, "/app/donors");
             }
             case HAS_DONATIONS -> {
-                Flash.error(request, outcome.getDonorName() + " has "
-                        + outcome.getDonationCount() + " recorded donation(s) and cannot be deleted. "
-                        + "Donation history is append-only because the eligibility rule is computed "
-                        + "from it. Deactivate their card instead if they should no longer donate.");
+                Flash.error(request, msg(request, "flash.donorHasDonations",
+                        outcome.getDonorName(), outcome.getDonationCount()));
                 redirect(request, response, "/app/donors/view?donorId=" + donorId.get());
             }
             case NOT_FOUND -> {
-                Flash.error(request, "No such donor - it may already have been deleted.");
+                Flash.error(request, msg(request, "flash.noSuchDonor"));
                 redirect(request, response, "/app/donors");
             }
         }

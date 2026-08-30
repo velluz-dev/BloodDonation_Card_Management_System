@@ -31,6 +31,30 @@ public enum ReportType {
         return title;
     }
 
+    /** Bundle key for the title, e.g. {@code report.type.DONATIONS}. */
+    public String getMessageKey() {
+        return "report.type." + name();
+    }
+
+    /** Bundle key for the line under the title. */
+    public String getSubtitleKey() {
+        return "report.subtitle." + name();
+    }
+
+    /** Bundle keys for this report's column headings, left to right. */
+    public java.util.List<String> getHeaderKeys() {
+        return switch (this) {
+            case DONATIONS -> java.util.List.of(
+                    "col.date", "col.donor", "col.group", "col.cardNo",
+                    "col.centre", "col.volume", "col.verifiedBy");
+            case BLOOD_GROUP -> java.util.List.of(
+                    "col.bloodGroup", "col.donors", "col.donations", "col.totalVolume");
+            case DONOR_ACTIVITY -> java.util.List.of(
+                    "col.donor", "col.group", "col.activeCard", "col.donations",
+                    "col.lastDonation", "col.eligibility", "col.nextEligible");
+        };
+    }
+
     /** True when this report is bounded by a date range. */
     public boolean isDateRanged() {
         return this == DONATIONS;

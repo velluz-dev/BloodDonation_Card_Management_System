@@ -13,10 +13,20 @@
 
   Page directives and taglibs live in taglibs.jspf, which every view includes
   before this one - see the note there for why the ordering matters.
+
+  Visible text comes from <fmt:message>, which resolves against the bundle
+  named in web.xml using the locale LocaleFilter settled before anything here
+  ran. A page therefore never mentions a language, and never needs
+  <fmt:setBundle>.
 --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
+<fmt:message var="bdcmsCentreFallback" key="common.centre"/>
+<fmt:message var="lblClose" key="common.close"/>
+<fmt:message var="lblLangSwitch" key="lang.switch"/>
 <!DOCTYPE html>
-<html lang="en">
+<%-- lang drives font selection, hyphenation and screen-reader pronunciation,
+     so it has to follow the switcher rather than stay hard-coded. --%>
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -38,24 +48,26 @@
       <span class="bdcms-mark" aria-hidden="true"><svg class="ic"><use href="#i-drop"/></svg></span>
       <span>
         <span class="bdcms-brand-name d-block">BDCMS</span>
-        <span class="bdcms-brand-sub d-block"><c:out value="${centreName}" default="Central Blood Bank" /></span>
+        <span class="bdcms-brand-sub d-block">
+          <c:out value="${centreName}" default="${bdcmsCentreFallback}" />
+        </span>
       </span>
     </a>
 
     <ul class="bdcms-nav">
       <li>
         <a class="${nav eq 'dashboard' ? 'active' : ''}" href="${ctx}/app/dashboard">
-          <svg class="ic" aria-hidden="true"><use href="#i-dashboard"/></svg> Dashboard
+          <svg class="ic" aria-hidden="true"><use href="#i-dashboard"/></svg> <fmt:message key="nav.dashboard"/>
         </a>
       </li>
       <li>
         <a class="${nav eq 'donors' ? 'active' : ''}" href="${ctx}/app/donors">
-          <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg> Donors
+          <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg> <fmt:message key="nav.donors"/>
         </a>
       </li>
       <li>
         <a class="${nav eq 'verify' ? 'active' : ''}" href="${ctx}/app/verify">
-          <svg class="ic" aria-hidden="true"><use href="#i-verify"/></svg> Verify &amp; record
+          <svg class="ic" aria-hidden="true"><use href="#i-verify"/></svg> <fmt:message key="nav.verify"/>
         </a>
       </li>
 
@@ -67,19 +79,19 @@
           <button type="button" class="bdcms-nav-toggle ${nav eq 'admin' ? 'active' : ''}"
                   data-bs-toggle="collapse" data-bs-target="#adminNav"
                   aria-expanded="${nav eq 'admin' ? 'true' : 'false'}" aria-controls="adminNav">
-            <svg class="ic" aria-hidden="true"><use href="#i-report"/></svg> Reports
+            <svg class="ic" aria-hidden="true"><use href="#i-report"/></svg> <fmt:message key="nav.reports"/>
             <svg class="ic bdcms-nav-chev" aria-hidden="true"><use href="#i-chev-down"/></svg>
           </button>
           <div class="collapse ${nav eq 'admin' ? 'show' : ''}" id="adminNav">
             <ul class="bdcms-subnav">
               <li><a class="${sub eq 'reports' ? 'active' : ''}"
-                     href="${ctx}/app/reports">Reports &amp; PDF</a></li>
+                     href="${ctx}/app/reports"><fmt:message key="nav.reportsPdf"/></a></li>
               <li><a class="${sub eq 'audit' ? 'active' : ''}"
-                     href="${ctx}/app/admin/verification-log">Verification audit log</a></li>
+                     href="${ctx}/app/admin/verification-log"><fmt:message key="nav.auditLog"/></a></li>
               <li><a class="${sub eq 'users' ? 'active' : ''}"
-                     href="${ctx}/app/admin/users">Staff accounts</a></li>
+                     href="${ctx}/app/admin/users"><fmt:message key="nav.staffAccounts"/></a></li>
               <li><a class="${sub eq 'settings' ? 'active' : ''}"
-                     href="${ctx}/app/admin/settings">System settings</a></li>
+                     href="${ctx}/app/admin/settings"><fmt:message key="nav.settings"/></a></li>
             </ul>
           </div>
         </li>
@@ -89,13 +101,13 @@
     <div class="bdcms-sidebar-foot">
       <div class="bdcms-help">
         <div class="bdcms-help-title">
-          <svg class="ic" aria-hidden="true"><use href="#i-help"/></svg> Need help?
+          <svg class="ic" aria-hidden="true"><use href="#i-help"/></svg> <fmt:message key="nav.help"/>
         </div>
-        <p>The user manual covers every task, by role.</p>
-        <a class="btn btn-sm btn-outline-danger w-100" href="${ctx}/app/verify">Start a donation</a>
+        <p><fmt:message key="nav.helpBody"/></p>
+        <a class="btn btn-sm btn-outline-danger w-100" href="${ctx}/app/verify"><fmt:message key="nav.startDonation"/></a>
       </div>
       <div class="bdcms-copyright">
-        &copy; 2026 <c:out value="${centreName}" default="Central Blood Bank" />
+        &copy; 2026 <c:out value="${centreName}" default="${bdcmsCentreFallback}" />
       </div>
     </div>
   </aside>
@@ -115,6 +127,18 @@
       </div>
 
       <div class="bdcms-topbar-actions">
+        <%-- Language switcher. Plain links rather than a dropdown: with two
+             languages a menu costs an extra click and hides the option behind
+             a word the operator may not read. The link returns to this same
+             page, filters and all - see LocaleFilter.switchBase. --%>
+        <div class="bdcms-langswitch" role="group"
+             aria-label="${lblLangSwitch}">
+          <a class="${lang eq 'en' ? 'active' : ''}" hreflang="en"
+             href="${fn:escapeXml(langSwitchBase)}lang=en">EN</a>
+          <a class="${lang eq 'my' ? 'active' : ''}" hreflang="my"
+             href="${fn:escapeXml(langSwitchBase)}lang=my">&#4121;&#4156;&#4116;&#4154;&#4121;&#4140;</a>
+        </div>
+
         <div class="bdcms-userchip">
           <svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>
           <span class="bdcms-userchip-name"><c:out value="${currentUser.fullName}" /></span>
@@ -125,7 +149,7 @@
         <form method="post" action="${ctx}/logout" class="m-0">
           <input type="hidden" name="_csrf" value="${csrfToken}">
           <button type="submit" class="btn btn-outline-secondary">
-            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-signout"/></svg> Sign out
+            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-signout"/></svg> <fmt:message key="common.signOut"/>
           </button>
         </form>
       </div>
@@ -136,13 +160,15 @@
       <c:if test="${not empty flashSuccess}">
         <div class="alert alert-success alert-dismissible fade show" role="alert">
           <c:out value="${flashSuccess}" />
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"
+                  aria-label="${lblClose}"></button>
         </div>
       </c:if>
       <c:if test="${not empty flashError}">
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
           <c:out value="${flashError}" />
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"
+                  aria-label="${lblClose}"></button>
         </div>
       </c:if>
       <c:if test="${not empty errorMessage}">

@@ -57,7 +57,7 @@ public class SettingsServlet extends BaseServlet {
         String value = param(request, "settingValue");
 
         if (key == null || value == null) {
-            Flash.error(request, "Both a setting and a value are required.");
+            Flash.error(request, msg(request, "flash.settingAndValueRequired"));
             redirect(request, response, "/app/admin/settings");
             return;
         }
@@ -69,12 +69,12 @@ public class SettingsServlet extends BaseServlet {
             try {
                 days = Integer.parseInt(value.trim());
             } catch (NumberFormatException e) {
-                Flash.error(request, "The donation interval must be a whole number of days.");
+                Flash.error(request, msg(request, "flash.intervalWholeNumber"));
                 redirect(request, response, "/app/admin/settings");
                 return;
             }
             if (days < 1 || days > 365) {
-                Flash.error(request, "The donation interval must be between 1 and 365 days.");
+                Flash.error(request, msg(request, "flash.intervalRange"));
                 redirect(request, response, "/app/admin/settings");
                 return;
             }
@@ -86,8 +86,7 @@ public class SettingsServlet extends BaseServlet {
         });
         settingsService.invalidate();
 
-        Flash.success(request, "Setting '" + key + "' updated to '" + value
-                + "'. It applies to the next eligibility check.");
+        Flash.success(request, msg(request, "flash.settingUpdated", key, value));
         redirect(request, response, "/app/admin/settings");
     }
 }

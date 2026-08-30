@@ -65,12 +65,11 @@ public class CardServlet extends BaseServlet {
         switch (action == null ? "" : action) {
             case "reportLost" -> {
                 cardService.reportLost(cardId.get());
-                Flash.success(request, "Card reported lost. It can no longer be used; "
-                        + "issue a replacement below. The donor's history is unaffected.");
+                Flash.success(request, msg(request, "flash.cardReportedLost"));
             }
             case "deactivate" -> {
                 cardService.deactivate(cardId.get());
-                Flash.success(request, "Card deactivated.");
+                Flash.success(request, msg(request, "flash.cardDeactivated"));
             }
             default -> {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown action");

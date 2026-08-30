@@ -2,6 +2,7 @@ package com.bdcms.feature.card;
 
 import com.bdcms.feature.donor.Donor;
 import com.bdcms.feature.donor.PhotoStore;
+import com.bdcms.shared.i18n.Messages;
 import com.bdcms.shared.pdf.PdfFonts;
 import com.bdcms.shared.config.AppConfig;
 import com.lowagie.text.Document;
@@ -21,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 /**
  * Renders a printable donor card as a PDF (FR-3).
@@ -44,7 +46,15 @@ public final class CardPdfRenderer {
     private CardPdfRenderer() {
     }
 
-    public static byte[] render(Donor donor, DonorCard card) {
+    /**
+     * Renders the printable card in {@code locale}.
+     *
+     * <p>The donor's name has always chosen its own font, because a name can
+     * carry any script. Now the printed labels can too - so each one asks
+     * {@link PdfFonts} rather than assuming Helvetica, which is WinAnsi and
+     * would drop a Myanmar glyph silently rather than substituting anything.
+     */
+    public static byte[] render(Donor donor, DonorCard card, Locale locale) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document document = new Document(CARD_SIZE, 8, 8, 8, 8);
 
@@ -52,34 +62,38 @@ public final class CardPdfRenderer {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.5f, BLOOD_RED);
-            Font centreFont = FontFactory.getFont(FontFactory.HELVETICA, 6f, Color.DARK_GRAY);
-            Font labelFont = FontFactory.getFont(FontFactory.HELVETICA, 5.5f, Color.GRAY);
             Font valueFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8f, Color.BLACK);
             Font groupFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16f, BLOOD_RED);
             Font monoFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 8f, Color.BLACK);
 
+            String title = Messages.get(locale, "pdfCard.title");
+            String centre = AppConfig.defaultCentre();
+
             PdfPTable header = new PdfPTable(1);
             header.setWidthPercentage(100);
-            header.addCell(borderless(new Phrase("BLOOD DONATION CARD", titleFont)));
-            header.addCell(borderless(new Phrase(AppConfig.defaultCentre(), centreFont)));
+            header.addCell(borderless(new Phrase(title,
+                    PdfFonts.forText(title, FontFactory.HELVETICA_BOLD, 8.5f,
+                            Font.NORMAL, BLOOD_RED))));
+            header.addCell(borderless(new Phrase(centre,
+                    PdfFonts.forText(centre, FontFactory.HELVETICA, 6f,
+                            Font.NORMAL, Color.DARK_GRAY))));
             document.add(header);
 
             PdfPTable body = new PdfPTable(new float[]{1.1f, 2.2f, 1.3f});
             body.setWidthPercentage(100);
             body.setSpacingBefore(4f);
 
-            body.addCell(photoCell(donor));
-            body.addCell(detailsCell(donor, card, labelFont, valueFont, groupFont));
-            body.addCell(qrCell(card, monoFont, labelFont));
+            body.addCell(photoCell(donor, locale));
+            body.addCell(detailsCell(donor, card, locale, valueFont, groupFont));
+            body.addCell(qrCell(card, locale, monoFont));
 
             document.add(body);
 
-            PdfPCell footer = borderless(new Phrase(
-                    "Issued " + (card.getIssuedOn() == null ? "-" : ISSUED.format(card.getIssuedOn()))
-                            + "   |   Present this card at every donation. "
-                            + "If found, please return to the centre above.",
-                    FontFactory.getFont(FontFactory.HELVETICA, 5f, Color.GRAY)));
+            String issued = card.getIssuedOn() == null ? "-" : ISSUED.format(card.getIssuedOn());
+            String note = Messages.format(locale, "pdfCard.footer", issued);
+            PdfPCell footer = borderless(new Phrase(note,
+                    PdfFonts.forText(note, FontFactory.HELVETICA, 5f,
+                            Font.NORMAL, Color.GRAY)));
             PdfPTable footerTable = new PdfPTable(1);
             footerTable.setWidthPercentage(100);
             footerTable.setSpacingBefore(3f);
@@ -93,7 +107,7 @@ public final class CardPdfRenderer {
         }
     }
 
-    private static PdfPCell photoCell(Donor donor) {
+    private static PdfPCell photoCell(Donor donor, Locale locale) {
         PdfPCell cell = new PdfPCell();
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setPadding(0);
@@ -109,8 +123,9 @@ public final class CardPdfRenderer {
             // Fall through to the textual placeholder below: a card must still
             // print even when the photograph is missing or unreadable.
         }
-        Phrase placeholder = new Phrase("NO\nPHOTO",
-                FontFactory.getFont(FontFactory.HELVETICA, 6f, Color.GRAY));
+        String none = Messages.get(locale, "pdfCard.noPhoto");
+        Phrase placeholder = new Phrase(none,
+                PdfFonts.forText(none, FontFactory.HELVETICA, 6f, Font.NORMAL, Color.GRAY));
         PdfPCell fallback = new PdfPCell(placeholder);
         fallback.setBorder(Rectangle.BOX);
         fallback.setBorderColor(Color.LIGHT_GRAY);
@@ -120,21 +135,21 @@ public final class CardPdfRenderer {
         return fallback;
     }
 
-    private static PdfPCell detailsCell(Donor donor, DonorCard card,
-                                        Font labelFont, Font valueFont, Font groupFont) {
+    private static PdfPCell detailsCell(Donor donor, DonorCard card, Locale locale,
+                                        Font valueFont, Font groupFont) {
         PdfPTable inner = new PdfPTable(1);
         inner.setWidthPercentage(100);
-        inner.addCell(borderless(new Phrase("DONOR NAME", labelFont)));
+        inner.addCell(borderless(label(locale, "pdfCard.donorName")));
         // The donor's name is the one field on the card that can carry a
         // non-Latin script, so it picks its own font. Everything else stays
         // Helvetica, and the card looks exactly as designed for Latin names.
         inner.addCell(borderless(new Phrase(donor.getFullName(),
                 PdfFonts.forText(donor.getFullName(), FontFactory.HELVETICA_BOLD,
-                        8f, com.lowagie.text.Font.NORMAL, Color.BLACK))));
-        inner.addCell(borderless(new Phrase("BLOOD GROUP", labelFont)));
+                        8f, Font.NORMAL, Color.BLACK))));
+        inner.addCell(borderless(label(locale, "pdfCard.bloodGroup")));
         inner.addCell(borderless(new Phrase(
                 donor.getBloodGroup() == null ? "-" : donor.getBloodGroup().getLabel(), groupFont)));
-        inner.addCell(borderless(new Phrase("CARD NUMBER", labelFont)));
+        inner.addCell(borderless(label(locale, "pdfCard.cardNumber")));
         inner.addCell(borderless(new Phrase(card.getCardNo(),
                 FontFactory.getFont(FontFactory.COURIER_BOLD, 8f, Color.BLACK))));
 
@@ -144,7 +159,7 @@ public final class CardPdfRenderer {
         return cell;
     }
 
-    private static PdfPCell qrCell(DonorCard card, Font monoFont, Font labelFont) {
+    private static PdfPCell qrCell(DonorCard card, Locale locale, Font monoFont) {
         PdfPTable inner = new PdfPTable(1);
         inner.setWidthPercentage(100);
         try {
@@ -155,14 +170,21 @@ public final class CardPdfRenderer {
             qrImage.setHorizontalAlignment(Element.ALIGN_CENTER);
             inner.addCell(qrImage);
         } catch (Exception e) {
-            inner.addCell(borderless(new Phrase("QR unavailable", labelFont)));
+            inner.addCell(borderless(label(locale, "pdfCard.qrUnavailable")));
         }
-        inner.addCell(borderless(new Phrase("SCAN AT COUNTER", labelFont)));
+        inner.addCell(borderless(label(locale, "pdfCard.scanAtCounter")));
 
         PdfPCell cell = new PdfPCell(inner);
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         return cell;
+    }
+
+    /** A small grey caption, in whichever script its translation needs. */
+    private static Phrase label(Locale locale, String key) {
+        String text = Messages.get(locale, key);
+        return new Phrase(text,
+                PdfFonts.forText(text, FontFactory.HELVETICA, 5.5f, Font.NORMAL, Color.GRAY));
     }
 
     private static PdfPCell borderless(Phrase phrase) {

@@ -62,8 +62,8 @@ public class DonorRegisterServlet extends BaseServlet {
 
         switch (result.outcome()) {
             case REGISTERED -> {
-                Flash.success(request, "Donor " + result.donor().getFullName()
-                        + " registered. Issue their donation card below.");
+                Flash.success(request, msg(request, "flash.donorRegistered",
+                        result.donor().getFullName()));
                 redirect(request, response, "/app/cards/issue?donorId=" + result.donor().getDonorId());
             }
             case DUPLICATE -> {

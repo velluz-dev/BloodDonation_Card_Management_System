@@ -8,6 +8,16 @@
   <display-name>Blood Donation Card Management System</display-name>
 
   <!--
+    The resource bundle every <fmt:message> resolves against. Naming it here
+    rather than repeating <fmt:setBundle> on 21 pages means a JSP asks for a key
+    and nothing else; LocaleFilter supplies the locale.
+  -->
+  <context-param>
+    <param-name>jakarta.servlet.jsp.jstl.fmt.localizationContext</param-name>
+    <param-value>messages</param-value>
+  </context-param>
+
+  <!--
     Servlets and the lifecycle listener are declared with annotations
     (@WebServlet, @WebListener) in their own feature packages, so a feature is
     complete in one directory.
@@ -15,13 +25,20 @@
     Filters are the exception and are declared here instead, because filter
     ORDER is the one thing @WebFilter cannot express and it matters:
       1. encoding  - must set UTF-8 before any parameter is read;
-      2. csrf      - must reject a forged POST before a servlet acts on it;
-      3. auth      - guards everything under /app.
+      2. locale    - must settle the language before anything renders, and
+                     before auth, so the login and error pages are translated
+                     too;
+      3. csrf      - must reject a forged POST before a servlet acts on it;
+      4. auth      - guards everything under /app.
     The container applies <filter-mapping> entries in the order they appear.
   -->
   <filter>
     <filter-name>encodingFilter</filter-name>
     <filter-class>com.bdcms.shared.web.EncodingFilter</filter-class>
+  </filter>
+  <filter>
+    <filter-name>localeFilter</filter-name>
+    <filter-class>com.bdcms.shared.i18n.LocaleFilter</filter-class>
   </filter>
   <filter>
     <filter-name>csrfFilter</filter-name>
@@ -34,6 +51,10 @@
 
   <filter-mapping>
     <filter-name>encodingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>localeFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
   <filter-mapping>

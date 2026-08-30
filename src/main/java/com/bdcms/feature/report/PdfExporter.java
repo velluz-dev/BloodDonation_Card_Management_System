@@ -1,6 +1,7 @@
 package com.bdcms.feature.report;
 
 import com.bdcms.shared.config.AppConfig;
+import com.bdcms.shared.i18n.Messages;
 import com.bdcms.shared.pdf.PdfFonts;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
@@ -17,6 +18,7 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 /**
  * Exports a {@link Report} to PDF (FR-7).
@@ -34,7 +36,23 @@ public final class PdfExporter {
     private PdfExporter() {
     }
 
-    public static byte[] export(Report report, String generatedBy) {
+    /**
+     * Renders {@code report} to PDF in {@code locale}.
+     *
+     * <h2>Every heading picks its own font</h2>
+     *
+     * <p>The built-in Helvetica is WinAnsi and cannot encode a Myanmar
+     * codepoint at all - the glyph does not fall back, it disappears. So no
+     * string here may assume Latin: the title, the subtitle, the column
+     * headings and the footer all go through
+     * {@link PdfFonts#forText(String, String, float, int, Color)}, which keeps
+     * Helvetica for Latin text and swaps in the embedded Unicode face only for
+     * the strings that need it.
+     *
+     * <p>An English report is therefore byte-for-byte what it always was, and
+     * a Burmese one embeds a font subset instead of printing gaps.
+     */
+    public static byte[] export(Report report, String generatedBy, Locale locale) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         // Landscape: the donations and donor-activity reports are seven columns
         // wide and would wrap unreadably on portrait A4.
@@ -43,21 +61,25 @@ public final class PdfExporter {
         PdfWriter.getInstance(document, out);
         document.open();
 
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16f, BLOOD_RED);
-        Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 9.5f, Color.DARK_GRAY);
-        Font metaFont = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, Color.GRAY);
-        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.5f, Color.WHITE);
-        Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8.5f, Color.BLACK);
+        String banner = AppConfig.defaultCentre() + "  -  "
+                + Messages.get(locale, "pdf.systemName");
+        String generated = Messages.format(locale, "pdf.generated",
+                GENERATED.format(LocalDateTime.now()), generatedBy);
 
-        document.add(paragraph(AppConfig.defaultCentre() + "  -  Blood Donation Card Management System",
-                metaFont, 0));
-        document.add(paragraph(report.title(), titleFont, 4));
-        document.add(paragraph(report.subtitle(), subtitleFont, 2));
-        document.add(paragraph("Generated " + GENERATED.format(LocalDateTime.now())
-                + " by " + generatedBy, metaFont, 2));
+        document.add(paragraph(banner, meta(banner), 0));
+        document.add(paragraph(report.title(),
+                PdfFonts.forText(report.title(), FontFactory.HELVETICA_BOLD, 16f,
+                        Font.NORMAL, BLOOD_RED), 4));
+        document.add(paragraph(report.subtitle(),
+                PdfFonts.forText(report.subtitle(), FontFactory.HELVETICA, 9.5f,
+                        Font.NORMAL, Color.DARK_GRAY), 2));
+        document.add(paragraph(generated, meta(generated), 2));
 
         if (report.isEmpty()) {
-            document.add(paragraph("No data for this report.", cellFont, 16));
+            String none = Messages.get(locale, "report.noData");
+            document.add(paragraph(none,
+                    PdfFonts.forText(none, FontFactory.HELVETICA, 8.5f,
+                            Font.NORMAL, Color.BLACK), 16));
             document.close();
             return out.toByteArray();
         }
@@ -68,7 +90,9 @@ public final class PdfExporter {
         table.setHeaderRows(1);
 
         for (String header : report.headers()) {
-            PdfPCell cell = new PdfPCell(new Phrase(header, headerFont));
+            PdfPCell cell = new PdfPCell(new Phrase(header,
+                    PdfFonts.forText(header, FontFactory.HELVETICA_BOLD, 8.5f,
+                            Font.NORMAL, Color.WHITE)));
             cell.setBackgroundColor(BLOOD_RED);
             cell.setPadding(5f);
             cell.setBorderColor(BLOOD_RED);
@@ -84,7 +108,7 @@ public final class PdfExporter {
                 String value = row.cell(i);
                 PdfPCell cell = new PdfPCell(new Phrase(value,
                         PdfFonts.forText(value, FontFactory.HELVETICA, 8.5f,
-                                com.lowagie.text.Font.NORMAL, Color.BLACK)));
+                                Font.NORMAL, Color.BLACK)));
                 cell.setPadding(4f);
                 cell.setBorderColor(new Color(0xDD, 0xDD, 0xDD));
                 if (shaded) {
@@ -96,12 +120,16 @@ public final class PdfExporter {
         }
         document.add(table);
 
-        document.add(paragraph(report.getRowCount() + " row(s). "
-                + "This report is generated from the centralised donor database and reflects "
-                + "records at the time of generation.", metaFont, 10));
+        String footer = Messages.format(locale, "pdf.footer", report.getRowCount());
+        document.add(paragraph(footer, meta(footer), 10));
 
         document.close();
         return out.toByteArray();
+    }
+
+    /** The small grey face, in whichever script {@code text} needs. */
+    private static Font meta(String text) {
+        return PdfFonts.forText(text, FontFactory.HELVETICA, 7.5f, Font.NORMAL, Color.GRAY);
     }
 
     private static Paragraph paragraph(String text, Font font, float spacingBefore) {

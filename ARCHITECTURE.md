@@ -271,6 +271,50 @@ photograph, the PIN and eligibility exactly as it does for a typed number. It
 prefers the browser's native `BarcodeDetector` and falls back to a bundled jsQR,
 so it works offline in any browser.
 
+**No screen owns its own wording.** Every user-visible string lives in
+`src/main/resources/messages.properties` (English) and `messages_my.properties`
+(Burmese) — around 300 of them. Nothing about that is decorative: "not
+eligible" appears on six screens, and one of them wording it differently is how
+staff start to distrust the rest. One key, one translation, everywhere.
+
+Text reaches a screen by one of four routes, and which route it takes is
+decided by who composes the sentence:
+
+| Composed by | Route | Example |
+|---|---|---|
+| A JSP | `<fmt:message key="…"/>` | every label, heading and button |
+| A servlet | `BaseServlet.msg(request, key, args…)` | flash messages, validation errors |
+| An enum | `getMessageKey()`, resolved by the JSP | card status, verification outcome, role, gender |
+| A PDF | `Messages.get(locale, key)` | report headings, the printed card |
+
+`LocaleFilter` settles the language once per request, before authentication —
+so the sign-in page and the error pages are translated too, which are the
+screens an operator is most likely to be stuck on. It publishes the choice as
+JSTL's `Config.FMT_LOCALE`, which is what lets a JSP write a bare
+`<fmt:message key="…"/>` with no `<fmt:setBundle>` anywhere in the codebase.
+
+**The preference is a cookie, not a session attribute.** Signing in invalidates
+the session to defeat fixation, so an operator who switches the sign-in page to
+Burmese and then signs in would land on an English dashboard. The cookie
+outlives that, and outlives signing out — which is what a shared counter
+machine actually wants.
+
+**Three things are deliberately *not* translated.** Blood groups, because "A+"
+is "A+" in every language and translating it only creates a way for two screens
+to disagree. Log lines and the audit `detail` column, because a log is read by
+whoever is on call and an audit row is evidence — neither should change
+depending on what a viewer once clicked. And enum *names* in the database,
+which are identifiers.
+
+**PDFs are the trap.** The built-in Helvetica is WinAnsi: handed a Myanmar
+codepoint it does not substitute a fallback glyph, it emits nothing, and the
+document renders with silent gaps. So no string in `PdfExporter` or
+`CardPdfRenderer` may assume Latin — each asks `PdfFonts.forText`, which keeps
+Helvetica for Latin and swaps in the embedded Padauk subset only where it is
+needed. An English report is byte-for-byte what it always was; a Burmese one
+embeds a font. That is measured, not assumed: the English card PDF is 5,395
+bytes with no embedded subset, the Burmese one 12,048 bytes with Padauk in it.
+
 **`EligibilityService` never queries the donations table.** It is handed a date. That is what lets the rule be tested against a hundred boundary dates in milliseconds with no database at all.
 
 ---

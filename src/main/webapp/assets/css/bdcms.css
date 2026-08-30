@@ -435,6 +435,54 @@ body.bdcms {
     gap: 10px;
 }
 
+/* ---- language switcher -------------------------------------------------
+
+   A segmented pair rather than a dropdown. Two languages do not justify a
+   menu, and a menu would hide the option behind a label the operator may not
+   be able to read - which is precisely the situation the switcher exists to
+   get them out of.
+
+   The Burmese label is set in Burmese, so it is legible to the person who
+   needs it without depending on them reading "Myanmar" in English first. */
+.bdcms-langswitch {
+    display: flex;
+    background: var(--bd-white);
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-r);
+    padding: 3px;
+    box-shadow: var(--bd-shadow);
+}
+
+.bdcms-langswitch a {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: calc(var(--bd-r) - 3px);
+    font: 600 12.5px/1 var(--bd-sans);
+    color: var(--bd-muted);
+    text-decoration: none;
+    /* Burmese sits taller than Latin; without this the two tabs jump in height
+       as the active one changes. */
+    min-height: 26px;
+    transition: background .15s, color .15s;
+}
+
+.bdcms-langswitch a:hover { color: var(--bd-ink); }
+
+.bdcms-langswitch a.active {
+    background: var(--bd-crimson);
+    color: #fff;
+}
+
+/* On the sign-in split screen there is no top bar to sit in, so it floats in
+   the corner of the light half. */
+.bdcms-langswitch-float {
+    position: absolute;
+    top: 22px;
+    right: 24px;
+    z-index: 3;
+}
+
 .bdcms-userchip {
     display: flex;
     align-items: center;
@@ -1474,6 +1522,9 @@ tr:hover .bd-row-go { color: var(--bd-crimson); }
     min-height: 100vh;
     display: flex;
     background: var(--bd-white);
+    /* Anchors .bdcms-langswitch-float, which has nowhere else to attach on
+       this page. */
+    position: relative;
 }
 
 .bdcms-login-brand {

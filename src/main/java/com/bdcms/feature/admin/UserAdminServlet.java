@@ -53,7 +53,7 @@ public class UserAdminServlet extends BaseServlet {
             case "disable" -> setActive(request, false);
             case "enable" -> setActive(request, true);
             case "resetPassword" -> resetPassword(request);
-            default -> Flash.error(request, "Unknown action.");
+            default -> Flash.error(request, msg(request, "flash.unknownAction"));
         }
         redirect(request, response, "/app/admin/users");
     }
@@ -65,51 +65,51 @@ public class UserAdminServlet extends BaseServlet {
         Role role = Role.of(param(request, "role", "STAFF"));
 
         if (!Validate.isUsername(username)) {
-            Flash.error(request, "Username must be 3-40 letters, digits, dots, hyphens or underscores.");
+            Flash.error(request, msg(request, "flash.usernameFormat"));
             return;
         }
         if (Validate.isBlank(fullName)) {
-            Flash.error(request, "Full name is required.");
+            Flash.error(request, msg(request, "flash.fullNameRequired"));
             return;
         }
         if (password == null || password.length() < 8) {
-            Flash.error(request, "Password must be at least 8 characters.");
+            Flash.error(request, msg(request, "flash.passwordTooShort"));
             return;
         }
 
         Optional<User> created = authService.createUser(username, fullName, role, password);
         if (created.isEmpty()) {
-            Flash.error(request, "That username is already taken.");
+            Flash.error(request, msg(request, "flash.usernameTaken"));
         } else {
-            Flash.success(request, "Account '" + username + "' created with the "
-                    + role.getLabel() + " role.");
+            Flash.success(request, msg(request, "flash.accountCreated", username,
+                    msg(request, role.getMessageKey())));
         }
     }
 
     private void setActive(HttpServletRequest request, boolean active) {
         Optional<Long> userId = longParam(request, "userId");
         if (userId.isEmpty()) {
-            Flash.error(request, "No account selected.");
+            Flash.error(request, msg(request, "flash.noAccountSelected"));
             return;
         }
         SessionUser me = currentUser(request);
         if (!active && me != null && me.userId() == userId.get()) {
             // Locking yourself out is not a scenario worth supporting.
-            Flash.error(request, "You cannot disable the account you are signed in with.");
+            Flash.error(request, msg(request, "flash.cannotDisableSelf"));
             return;
         }
         authService.setActive(userId.get(), active);
-        Flash.success(request, active ? "Account enabled." : "Account disabled.");
+        Flash.success(request, msg(request, active ? "flash.accountEnabled" : "flash.accountDisabled"));
     }
 
     private void resetPassword(HttpServletRequest request) {
         Optional<Long> userId = longParam(request, "userId");
         String password = request.getParameter("password");
         if (userId.isEmpty() || password == null || password.length() < 8) {
-            Flash.error(request, "A new password of at least 8 characters is required.");
+            Flash.error(request, msg(request, "flash.newPasswordRequired"));
             return;
         }
         authService.resetPassword(userId.get(), password);
-        Flash.success(request, "Password reset. Ask the user to change it after signing in.");
+        Flash.success(request, msg(request, "flash.passwordReset"));
     }
 }

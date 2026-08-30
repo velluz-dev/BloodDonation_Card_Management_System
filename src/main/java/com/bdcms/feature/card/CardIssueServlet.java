@@ -60,8 +60,8 @@ public class CardIssueServlet extends BaseServlet {
 
         DonorCard issued = cardService.issue(donor.get().getDonorId(), staff.userId(), supersededAs);
 
-        Flash.success(request, "Card " + issued.getCardNo() + " issued to "
-                + donor.get().getFullName() + ". Print it and hand it to the donor.");
+        Flash.success(request, msg(request, "flash.cardIssued",
+                issued.getCardNo(), donor.get().getFullName()));
         redirect(request, response, "/app/cards/print?cardNo=" + issued.getCardNo());
     }
 

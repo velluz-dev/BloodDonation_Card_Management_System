@@ -64,7 +64,8 @@ public class ReportServlet extends BaseServlet {
             to = swap;
         }
 
-        Report report = reportService.build(type, from, to);
+        Report report = reportService.build(type, from, to,
+                com.bdcms.shared.i18n.Locales.current(request));
 
         if ("pdf".equalsIgnoreCase(param(request, "format"))) {
             sendPdf(request, response, report, type);
@@ -92,7 +93,8 @@ public class ReportServlet extends BaseServlet {
 
         SessionUser staff = currentUser(request);
         byte[] pdf = PdfExporter.export(report,
-                staff == null ? "unknown" : staff.fullName() + " (" + staff.username() + ")");
+                staff == null ? "unknown" : staff.fullName() + " (" + staff.username() + ")",
+                com.bdcms.shared.i18n.Locales.current(request));
 
         String filename = "bdcms-" + type.getSlug() + "-" + LocalDate.now() + ".pdf";
         response.setContentType("application/pdf");

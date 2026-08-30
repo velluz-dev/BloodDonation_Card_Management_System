@@ -71,6 +71,28 @@ had already saved is lost — but anything typed into a form and not submitted i
 On a shared counter machine, **sign out** when you step away rather than relying
 on the timeout.
 
+### Choosing your language (English or မြန်မာ)
+
+Top-right of every screen, next to your name, is a pair of buttons: **EN** and
+**မြန်မာ**. Click either one and the whole interface changes — menus, labels,
+buttons, error messages, and the PDFs you export.
+
+Three things worth knowing:
+
+- **You stay where you are.** Switching in the middle of a donor search keeps
+  your search and your filters. It reloads the same page in the other language,
+  not the dashboard.
+- **The choice sticks to the machine, not to your account.** It survives signing
+  out and the next person signing in, so a counter can be set to Burmese once
+  and left that way. If you share a machine and prefer English, check the top
+  right before you start.
+- **The sign-in page has the switcher too**, in its top-right corner — so you do
+  not have to read English to get to it.
+
+Blood groups stay as `A+`, `O-` and so on in both languages: they are the same
+worldwide, and translating them would only create a way for two screens to
+disagree.
+
 ### Reading the screen
 
 - **Crimson** means one of three things: a blood group, the main action on the

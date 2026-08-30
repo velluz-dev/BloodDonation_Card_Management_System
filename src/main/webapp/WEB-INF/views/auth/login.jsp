@@ -9,13 +9,15 @@
   there is nowhere to navigate to before signing in.
 --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
+<fmt:message var="lblSignIn" key="login.title"/>
+<fmt:message var="lblFillForm" key="login.fillForm"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Sign in &middot; BDCMS</title>
+  <title>${lblSignIn} &middot; BDCMS</title>
   <link rel="stylesheet" href="${ctx}/assets/vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="${ctx}/assets/css/bdcms.css">
   <link rel="icon" href="${ctx}/assets/img/favicon.svg" type="image/svg+xml">
@@ -24,6 +26,16 @@
 
 <div class="bdcms-login">
 
+  <%-- The switcher is repeated here because this page does not use the shared
+       shell, and an operator who cannot read the sign-in screen has no way to
+       reach the switcher that lives behind it. --%>
+  <div class="bdcms-langswitch bdcms-langswitch-float" role="group">
+    <a class="${lang eq 'en' ? 'active' : ''}" hreflang="en"
+       href="${fn:escapeXml(langSwitchBase)}lang=en">EN</a>
+    <a class="${lang eq 'my' ? 'active' : ''}" hreflang="my"
+       href="${fn:escapeXml(langSwitchBase)}lang=my">&#4121;&#4156;&#4116;&#4154;&#4121;&#4140;</a>
+  </div>
+
   <div class="bdcms-login-brand">
     <div class="d-flex align-items-center gap-2">
       <span class="bdcms-drop" aria-hidden="true"></span>
@@ -31,9 +43,13 @@
     </div>
 
     <div>
-      <div class="bdcms-login-claim">One donor.<br>One record.<br>One card.</div>
+      <%-- The claim carries its own <br>, because the line breaks fall in
+           different places in each language. fmt:message writes the bundle
+           value through unescaped, which is what makes that work and is safe
+           here: the string is ours, not a donor's. --%>
+      <div class="bdcms-login-claim"><fmt:message key="login.claim"/></div>
       <div class="bdcms-login-claim-sub">
-        Centralised donor identity, verified at the point of donation.
+        <fmt:message key="login.claimSub"/>
       </div>
     </div>
 
@@ -47,9 +63,9 @@
     <div class="bdcms-login-form">
 
       <div class="mb-4">
-        <h1 style="font:600 26px/1.2 var(--bd-sans);letter-spacing:-.015em;margin:0">Sign in</h1>
+        <h1 style="font:600 26px/1.2 var(--bd-sans);letter-spacing:-.015em;margin:0">${lblSignIn}</h1>
         <p style="font:400 14px/1.5 var(--bd-sans);color:var(--bd-ink-55,rgba(23,21,15,.55));margin:6px 0 0">
-          Use your centre-issued staff account.
+          <fmt:message key="login.subtitle"/>
         </p>
       </div>
 
@@ -67,19 +83,19 @@
         </c:if>
 
         <div class="mb-3">
-          <label for="username" class="form-label">Username</label>
+          <label for="username" class="form-label"><fmt:message key="login.username"/></label>
           <input type="text" class="form-control font-monospace" id="username" name="username"
                  value="${fn:escapeXml(username)}" required autofocus
                  maxlength="40" autocomplete="username">
         </div>
 
         <div class="mb-4">
-          <label for="password" class="form-label">Password</label>
+          <label for="password" class="form-label"><fmt:message key="login.password"/></label>
           <input type="password" class="form-control" id="password" name="password"
                  required autocomplete="current-password">
         </div>
 
-        <button type="submit" class="btn btn-danger w-100 btn-lg">Sign in</button>
+        <button type="submit" class="btn btn-danger w-100 btn-lg">${lblSignIn}</button>
       </form>
 
       <%-- Seeded demonstration accounts. Shown only when
@@ -88,8 +104,8 @@
       <c:if test="${not empty demoAccounts}">
         <div class="bdcms-demo mt-4">
           <div class="d-flex align-items-baseline justify-content-between gap-2 mb-2">
-            <span class="bd-eyebrow">Demonstration accounts</span>
-            <span class="bdcms-demo-warn">Seeded data &middot; remove before real use</span>
+            <span class="bd-eyebrow"><fmt:message key="login.demoAccounts"/></span>
+            <span class="bdcms-demo-warn"><fmt:message key="login.demoWarn"/></span>
           </div>
 
           <div class="d-flex flex-column gap-1">
@@ -97,7 +113,7 @@
               <button type="button" class="bdcms-demo-row"
                       data-username="${fn:escapeXml(a.username)}"
                       data-password="${fn:escapeXml(a.password)}"
-                      title="Fill the form with this account">
+                      title="${fn:escapeXml(lblFillForm)}">
                 <span class="bdcms-demo-user"><c:out value="${a.username}" /></span>
                 <span class="bdcms-demo-pass"><c:out value="${a.password}" /></span>
                 <span class="badge ${a.admin ? 'text-bg-danger' : 'text-bg-secondary'}">
@@ -108,8 +124,7 @@
           </div>
 
           <div class="bdcms-demo-hint">
-            Click a row to fill the form. Every demonstration donor's
-            verification PIN is <span class="font-monospace">1234</span>.
+            <fmt:message key="login.demoHint"/>
           </div>
         </div>
       </c:if>
@@ -118,9 +133,7 @@
            style="padding:13px 15px;background:var(--bd-wash);border-radius:var(--bd-r)">
         <span class="bdcms-dot bdcms-dot-grey" style="width:5px;height:5px;margin-top:7px"></span>
         <div style="font:400 12.5px/1.5 var(--bd-sans);color:rgba(23,21,15,.55)">
-          Every sign-in, verification attempt and donation record is written to the
-          audit log with your account and timestamp. Sessions end after 20 minutes
-          of inactivity.
+          <fmt:message key="login.audit"/>
         </div>
       </div>
 

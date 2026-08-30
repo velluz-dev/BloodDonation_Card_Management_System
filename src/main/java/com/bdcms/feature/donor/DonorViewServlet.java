@@ -88,7 +88,7 @@ public class DonorViewServlet extends BaseServlet {
             return;
         }
 
-        Flash.success(request, "Donor record updated.");
+        Flash.success(request, msg(request, "flash.donorUpdated"));
         redirect(request, response, "/app/donors/view?donorId=" + donor.getDonorId());
     }
 
@@ -98,12 +98,11 @@ public class DonorViewServlet extends BaseServlet {
         boolean clearing = "clear".equals(param(request, "pinMode"));
 
         if (!clearing && !Validate.isPin(pin)) {
-            Flash.error(request, "PIN must be exactly four digits.");
+            Flash.error(request, msg(request, "flash.pinFourDigits"));
         } else {
             donorService.setPin(donor.getDonorId(), clearing ? null : pin);
-            Flash.success(request, clearing
-                    ? "Verification PIN removed."
-                    : "Verification PIN updated.");
+            Flash.success(request, msg(request,
+                    clearing ? "flash.pinRemoved" : "flash.pinUpdated"));
         }
         redirect(request, response, "/app/donors/view?donorId=" + donor.getDonorId());
     }

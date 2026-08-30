@@ -50,7 +50,8 @@ public class CardPrintServlet extends BaseServlet {
         }
 
         if ("pdf".equalsIgnoreCase(param(request, "format"))) {
-            sendPdf(response, donor.get(), card.get());
+            sendPdf(response, donor.get(), card.get(),
+                    com.bdcms.shared.i18n.Locales.current(request));
             return;
         }
 
@@ -60,9 +61,9 @@ public class CardPrintServlet extends BaseServlet {
         render(request, response, "card/print.jsp");
     }
 
-    private void sendPdf(HttpServletResponse response, Donor donor, DonorCard card)
-            throws IOException {
-        byte[] pdf = CardPdfRenderer.render(donor, card);
+    private void sendPdf(HttpServletResponse response, Donor donor, DonorCard card,
+                         java.util.Locale locale) throws IOException {
+        byte[] pdf = CardPdfRenderer.render(donor, card, locale);
         response.setContentType("application/pdf");
         response.setContentLength(pdf.length);
         // "inline" so it opens in the browser's PDF viewer ready to print,

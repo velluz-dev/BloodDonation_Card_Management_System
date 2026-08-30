@@ -5,7 +5,7 @@
   The table and the PDF export are rendered from the same Report object, so the
   exported file can never show something different from the screen it came from.
 --%>
-<c:set var="pageTitle" value="Reports" scope="request" />
+<fmt:message var="pageTitle" key="report.title" scope="request"/>
 <c:set var="nav" value="admin" scope="request" />
 <%@ include file="../layout/header.jspf" %>
 
@@ -19,17 +19,17 @@
     <input type="hidden" name="type" value="${type.slug}">
     <c:if test="${type.dateRanged}">
       <div>
-        <label for="from" class="form-label">From</label>
+        <label for="from" class="form-label"><fmt:message key="report.from"/></label>
         <input type="date" class="form-control" id="from" name="from" value="${from}" max="${today}">
       </div>
       <div>
-        <label for="to" class="form-label">To</label>
+        <label for="to" class="form-label"><fmt:message key="report.to"/></label>
         <input type="date" class="form-control" id="to" name="to" value="${to}" max="${today}">
       </div>
-      <button type="submit" class="btn btn-quiet">Apply range</button>
+      <button type="submit" class="btn btn-quiet"><fmt:message key="report.applyRange"/></button>
     </c:if>
     <a class="btn btn-outline-secondary"
-       href="${ctx}/app/reports?type=${type.slug}&from=${from}&to=${to}&format=pdf">Export PDF</a>
+       href="${ctx}/app/reports?type=${type.slug}&from=${from}&to=${to}&format=pdf"><fmt:message key="report.exportPdf"/></a>
   </form>
 </div>
 
@@ -41,7 +41,7 @@
          style="font:500 13.5px/1 var(--bd-sans);color:${type eq t ? 'var(--bd-ink)' : 'var(--bd-ink-60)'};
                 border:none;border-bottom:2px solid ${type eq t ? 'var(--bd-crimson)' : 'transparent'};
                 border-radius:0;padding:11px 16px">
-        <c:out value="${t.title}" />
+        <fmt:message key="${t.messageKey}"/>
       </a>
     </li>
   </c:forEach>
@@ -53,7 +53,7 @@
       <div class="card-header d-flex justify-content-between align-items-baseline">
         <span><c:out value="${report.title}" /></span>
         <span style="font:400 12px/1 var(--bd-mono);color:var(--bd-ink-50)">
-          ${report.rowCount} row(s)
+          <fmt:message key="report.rows"><fmt:param value="${report.rowCount}"/></fmt:message>
         </span>
       </div>
       <div class="table-responsive">
@@ -79,7 +79,7 @@
               <tr>
                 <td colspan="${fn:length(report.headers)}" class="text-center py-5"
                     style="color:var(--bd-ink-50)">
-                  No data for this report.
+                  <fmt:message key="report.noData"/>
                 </td>
               </tr>
             </c:if>
@@ -92,7 +92,7 @@
   <%-- ---- rail: distribution and verification outcomes ---- --%>
   <div class="col-12 col-xl-4">
     <div class="card mb-3">
-      <div class="card-header">Blood group distribution</div>
+      <div class="card-header"><fmt:message key="report.bloodGroupDistribution"/></div>
       <div class="card-body d-flex flex-column gap-2">
         <c:forEach var="g" items="${bloodGroupMix}">
           <div class="bdcms-bar-row">
@@ -108,14 +108,14 @@
         </c:forEach>
         <c:if test="${empty bloodGroupMix}">
           <div style="font:400 12.5px/1.5 var(--bd-sans);color:var(--bd-ink-50)">
-            No donors registered yet.
+            <fmt:message key="dash.noDonors"/>
           </div>
         </c:if>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-header">Verification outcomes</div>
+      <div class="card-header"><fmt:message key="report.verificationOutcomes"/></div>
       <div class="card-body d-flex flex-column gap-3">
         <c:forEach var="o" items="${verificationOutcomes}">
           <c:set var="tone" value="var(--bd-crimson)" />
@@ -123,7 +123,7 @@
           <c:if test="${o.key.success and o.value > 0}"><c:set var="tone" value="var(--bd-green)" /></c:if>
           <div class="d-flex justify-content-between align-items-baseline">
             <span style="font:400 13.5px/1 var(--bd-sans);color:var(--bd-ink-60)">
-              <c:out value="${o.key.label}" />
+              <fmt:message key="${o.key.messageKey}"/>
             </span>
             <span class="font-monospace" style="font-weight:500;font-size:16px;color:${tone}">
               ${o.value}
@@ -132,13 +132,13 @@
         </c:forEach>
         <c:if test="${empty verificationOutcomes}">
           <div style="font:400 12.5px/1.5 var(--bd-sans);color:var(--bd-ink-50)">
-            No verification attempts recorded yet.
+            <fmt:message key="report.noAttempts"/>
           </div>
         </c:if>
       </div>
       <div class="card-footer" style="font:400 12.5px/1.5 var(--bd-sans);color:var(--bd-ink-50)">
-        Every attempt is logged, successful or not.
-        <a href="${ctx}/app/admin/verification-log">Open the audit log</a>.
+        <fmt:message key="report.everyAttemptLogged"/>
+        <a href="${ctx}/app/admin/verification-log"><fmt:message key="report.openAuditLog"/></a>.
       </div>
     </div>
   </div>
@@ -146,9 +146,8 @@
 
 <c:if test="${type eq 'DONOR_ACTIVITY'}">
   <div class="mt-3" style="font:400 12.5px/1.5 var(--bd-sans);color:var(--bd-ink-50)">
-    Eligibility is evaluated against the interval currently configured in
-    <a href="${ctx}/app/admin/settings">system settings</a>, not a value hard-coded
-    in the report.
+    <fmt:message key="report.eligibilityNotePre"/>
+    <a href="${ctx}/app/admin/settings"><fmt:message key="nav.settings"/></a><fmt:message key="report.eligibilityNotePost"/>
   </div>
 </c:if>
 

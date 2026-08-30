@@ -1,5 +1,8 @@
 package com.bdcms.shared.web;
 
+import com.bdcms.shared.i18n.Locales;
+import com.bdcms.shared.i18n.Messages;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -70,6 +73,26 @@ public abstract class BaseServlet extends HttpServlet {
         response.sendError(HttpServletResponse.SC_FORBIDDEN,
                 "Invalid or missing security token. Please reload the page and try again.");
         return false;
+    }
+
+    // ---- interface text ----------------------------------------------------
+
+    /**
+     * A translated message for this request's language.
+     *
+     * <p>Flash messages and validation errors are the one class of user-visible
+     * text a JSP never sees as text - the servlet has already composed it - so
+     * they cannot be translated by {@code <fmt:message>} the way everything
+     * else on the page is. This is their route to the same bundles.
+     *
+     * <p>The locale was settled by {@code LocaleFilter} before the servlet ran,
+     * so this never has to work it out again.
+     *
+     * @param key  bundle key
+     * @param args values for {@code {0}}, {@code {1}} …
+     */
+    protected String msg(HttpServletRequest request, String key, Object... args) {
+        return Messages.format(Locales.current(request), key, args);
     }
 
     // ---- parameter helpers -------------------------------------------------

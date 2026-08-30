@@ -7,15 +7,14 @@
   reviewing are precisely the ones that did not go well, so they should be the
   first thing the eye lands on.
 --%>
-<c:set var="pageTitle" value="Verification audit log" scope="request" />
+<fmt:message var="pageTitle" key="audit.title" scope="request"/>
 <c:set var="nav" value="admin" scope="request" />
 <%@ include file="../layout/header.jspf" %>
 
 <div class="mb-4">
-  <h1 class="bd-page-title">Verification audit log</h1>
+  <h1 class="bd-page-title"><fmt:message key="audit.title"/></h1>
   <p class="bd-page-sub">
-    Every attempt to verify a donor card &mdash; including the ones that failed,
-    which are the ones worth reviewing
+    <fmt:message key="audit.subtitle"/>
   </p>
 </div>
 
@@ -27,26 +26,26 @@
         <form method="get" action="${ctx}/app/admin/verification-log"
               class="row g-2 align-items-end">
           <div class="col-6 col-md-3">
-            <label for="from" class="form-label">From</label>
+            <label for="from" class="form-label"><fmt:message key="report.from"/></label>
             <input type="date" class="form-control" id="from" name="from"
                    value="${from}" max="${today}">
           </div>
           <div class="col-6 col-md-3">
-            <label for="to" class="form-label">To</label>
+            <label for="to" class="form-label"><fmt:message key="report.to"/></label>
             <input type="date" class="form-control" id="to" name="to"
                    value="${to}" max="${today}">
           </div>
           <div class="col-8 col-md-3">
-            <label for="donorId" class="form-label">Donor ID (optional)</label>
+            <label for="donorId" class="form-label"><fmt:message key="audit.donorId"/></label>
             <input type="number" class="form-control font-monospace" id="donorId"
                    name="donorId" value="${donorId}">
           </div>
           <div class="col-4 col-md-auto">
-            <button type="submit" class="btn btn-outline-secondary w-100">Filter</button>
+            <button type="submit" class="btn btn-outline-secondary w-100"><fmt:message key="common.filter"/></button>
           </div>
           <c:if test="${not empty from or not empty to or not empty donorId}">
             <div class="col-auto">
-              <a href="${ctx}/app/admin/verification-log" class="btn btn-quiet">Reset</a>
+              <a href="${ctx}/app/admin/verification-log" class="btn btn-quiet"><fmt:message key="common.reset"/></a>
             </div>
           </c:if>
         </form>
@@ -58,12 +57,12 @@
         <table class="table table-hover mb-0">
           <thead class="table-light">
             <tr>
-              <th>When</th>
-              <th>Card number</th>
-              <th>Donor</th>
-              <th>Result</th>
-              <th>Detail</th>
-              <th>Staff account</th>
+              <th><fmt:message key="dash.when"/></th>
+              <th><fmt:message key="common.cardNumber"/></th>
+              <th><fmt:message key="common.donor"/></th>
+              <th><fmt:message key="common.result"/></th>
+              <th><fmt:message key="audit.detail"/></th>
+              <th><fmt:message key="audit.staffAccount"/></th>
             </tr>
           </thead>
           <tbody>
@@ -84,13 +83,13 @@
                       </a>
                     </c:when>
                     <c:otherwise>
-                      <span style="color:var(--bd-ink-50)">&mdash; unmatched card &mdash;</span>
+                      <span style="color:var(--bd-ink-50)"><fmt:message key="audit.unmatchedCard"/></span>
                     </c:otherwise>
                   </c:choose>
                 </td>
                 <td>
                   <span class="badge text-bg-${e.result.badgeClass}">
-                    <c:out value="${e.result.label}" />
+                    <fmt:message key="${e.result.messageKey}"/>
                   </span>
                 </td>
                 <td style="font-size:12.5px;color:var(--bd-ink-50)">
@@ -104,7 +103,7 @@
             <c:if test="${empty entries}">
               <tr>
                 <td colspan="6" class="text-center py-5" style="color:var(--bd-ink-50)">
-                  No attempts match this filter.
+                  <fmt:message key="audit.noMatch"/>
                 </td>
               </tr>
             </c:if>
@@ -113,18 +112,20 @@
       </div>
 
       <div class="card-footer d-flex justify-content-between align-items-center">
-        <span style="font:400 12.5px/1 var(--bd-sans);color:var(--bd-ink-50)">Page ${page}</span>
+        <span style="font:400 12.5px/1 var(--bd-sans);color:var(--bd-ink-50)">
+          <fmt:message key="common.page"/> ${page}
+        </span>
         <div class="d-flex gap-2">
           <c:if test="${page > 1}">
             <a class="btn btn-sm btn-quiet"
                href="${ctx}/app/admin/verification-log?page=${page - 1}&from=${from}&to=${to}&donorId=${donorId}">
-              Previous
+              <fmt:message key="common.previous"/>
             </a>
           </c:if>
           <c:if test="${hasNextPage}">
             <a class="btn btn-sm btn-quiet"
                href="${ctx}/app/admin/verification-log?page=${page + 1}&from=${from}&to=${to}&donorId=${donorId}">
-              Next
+              <fmt:message key="common.next"/>
             </a>
           </c:if>
         </div>
@@ -135,7 +136,7 @@
   <%-- ---- outcome tally ---- --%>
   <div class="col-12 col-xl-3">
     <div class="card">
-      <div class="card-header">Outcomes</div>
+      <div class="card-header"><fmt:message key="audit.outcomes"/></div>
       <div class="card-body d-flex flex-column gap-3">
         <c:forEach var="o" items="${outcomes}">
           <c:set var="tone" value="var(--bd-crimson)" />
@@ -143,7 +144,7 @@
           <c:if test="${o.key.success and o.value > 0}"><c:set var="tone" value="var(--bd-green)" /></c:if>
           <div class="d-flex justify-content-between align-items-baseline gap-2">
             <span style="font:400 13px/1.35 var(--bd-sans);color:var(--bd-ink-60)">
-              <c:out value="${o.key.label}" />
+              <fmt:message key="${o.key.messageKey}"/>
             </span>
             <span class="font-monospace"
                   style="font-weight:500;font-size:16px;color:${tone}">${o.value}</span>
@@ -156,8 +157,7 @@
     </div>
 
     <div class="alert alert-info mt-3">
-      This log is append-only. Rows are never edited or deleted &mdash; an audit
-      trail that can be tidied up is not an audit trail.
+      <fmt:message key="audit.appendOnly"/>
     </div>
   </div>
 </div>

@@ -44,10 +44,9 @@ public class DonationRecordServlet extends BaseServlet {
                 faceDistance(request));
 
         if (outcome.isRecorded()) {
-            Flash.success(request, "Donation recorded for "
-                    + outcome.donation().getDonorName() + ". "
-                    + "The donor may next donate on or after "
-                    + donationDate.plusDays(outcome.eligibility().intervalDays()) + ".");
+            Flash.success(request, msg(request, "flash.donationRecorded",
+                    outcome.donation().getDonorName(),
+                    donationDate.plusDays(outcome.eligibility().intervalDays())));
             redirect(request, response,
                     "/app/donations/history?donorId=" + outcome.donation().getDonorId());
             return;

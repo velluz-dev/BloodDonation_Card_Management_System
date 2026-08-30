@@ -209,6 +209,41 @@ So: **shared and donor first**, then card and verification, then donation, then 
 
 `eligibility` is independent — it depends only on `shared`, so whoever has it can start immediately.
 
+### Changing wording, in either language
+
+**Never edit visible text in a JSP.** It is not there. Both languages live in:
+
+```
+src/main/resources/messages.properties      English
+src/main/resources/messages_my.properties   Burmese
+```
+
+Find the key, change the value, rebuild. It updates everywhere that key is
+used, which is the point.
+
+**The Burmese needs a native speaker's eye.** It was written to get the
+interface working end to end, not by a translator. The header of
+`messages_my.properties` lists the terms to check first — the ones where a
+wrong word changes meaning rather than just reading awkwardly, such as the
+eligible / not-eligible verdict and the sentence staff tick to confirm an
+identity. If you speak Burmese, that file is the single most useful thing you
+can improve, and you can do it without touching any Java.
+
+Two rules the build enforces, so you will find out immediately if you break
+them:
+
+- **Every English key must have a Burmese translation.** `MessagesTest` fails
+  the build otherwise. A screen that is 90% Burmese and 10% English reads as
+  broken rather than as unfinished.
+- **Apostrophes depend on whether the message takes parameters.** A message
+  containing `{0}` must double them (`don''t`); one without takes a single
+  apostrophe. Get it wrong and MessageFormat silently swallows the rest of the
+  sentence — there is a test for this too, because nothing else catches it.
+
+Adding a new string: put it in **both** files, then use
+`<fmt:message key="your.key"/>` in the JSP, or `msg(request, "your.key")` in a
+servlet.
+
 ### "I want to change X — where do I go?"
 
 | I want to... | Edit |
